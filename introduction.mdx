@@ -1,17 +1,21 @@
 
 ## Chronologue Documentation
 
-**Chronologue** is a platform for orchestrating structured memory into scheduled actions—integrated with calendar APIs to support coordination and planning.
+Chronologue is a platform for turning structured memory (e.g., conversation history) into scheduled events using calendar APIs—enabling retrieval, coordination, and planning.
 
-Built for both user workflows and AI-driven agent scheduling, it transforms structured conversational histories, goals, observations, and planned actions into validated `.ics` events—ready for synchronization with Google Calendar, Apple Calendar, and other platforms.
+It supports a bidirectional link between calendars and language models: events are generated from memory traces, and calendars in turn provide context for agent reasoning and decision-making.
 
-<Info>
-  To get started, head to the [Quickstart Guide](/quickstart) or explore how [datasets](/datasets) are structured.
-</Info>
+## Language Models and Calendars: A Bidirectional Loop
+
+Chronologue is designed around a key insight: **calendars are not just outputs of planning—they're also vital context for decision-making**.
 
 **For Users:** Chronologue provides a transparent interface for reviewing past interactions, scheduling future events, and coordinating actions over time—designed for reliability and clarity in daily workflows.
 
 **For Developers:** Its local-first design and schema-driven architecture ensure memory traces can be validated, edited, and synchronized consistently across calendar systems.
+
+<Info>
+  To get started, head to the [Quickstart Guide](/quickstart) or explore how [datasets](/datasets) are structured.
+</Info>
 
 ## Core Components
 
@@ -46,6 +50,10 @@ Built for both user workflows and AI-driven agent scheduling, it transforms stru
 - Editable event pipelines with Markdown preview output  
 - Integration pathways for conversation agents and planning systems  
 
+
+
+
+### Flow: Memory ↔ LLM ↔ Calendar
 
 <CardGroup cols={2}>
   <Card

@@ -30,6 +30,7 @@
               "foundations/prompt-examples",
               "foundations/system-design",
               "foundations/interaction-model",
+              "foundations/bidirectional-loop",
               "foundations/multisession"
             ]
           },
