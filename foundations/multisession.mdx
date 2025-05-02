@@ -1,0 +1,37 @@
+
+###  **Orchestration Over Time**
+
+Agents are not stateless responders—they maintain continuity across sessions by integrating with the MCP timeline. This enables:
+
+- **Multi-Session Follow-Up**  
+    E.g., after `"Submit IRB application"`, agent checks status next week:  
+    `"Do you want to schedule time to write the response letter?"`
+    
+- **Memory-Conditioned Suggestions**  
+    Agents reason from past traces:  
+    `"You typically do writing blocks at 10am—want to block time for this paper?"`
+    
+- **Cross-Context Consistency**  
+    Goal and reflection traces ensure continuity:  
+    `"You’ve been revisiting this topic for 3 weeks—shall we review progress?"`
+    
+---
+
+This model supports **persistent, evolving plans**, giving users control over their own actions and the actions agents take on their behalf. Agents behave more like long-term collaborators—reasoning from user-defined context, adapting over time, and aligning with user goals.
+
+By anchoring this interaction in a familiar interface, Cursor Calendar bridges the gap between natural language intent and structured planning—making it accessible to everyday users while enabling developers to orchestrate complex, multi-agent systems in production.
+
+#### Dataset Curation 
+
+| Use Case            | Memory Type   | Core Structure                                         |
+| ------------------- | ------------- | ------------------------------------------------------ |
+| Grocery Scheduling  | `OrderMemory` | Items, quantities, approval times, delivery windows    |
+| Sports Scheduling   | `EventMemory` | Team name, event date/time, opponent, link to watch    |
+| Conversation Memory | `ChatMemory`  | Timestamped message history, link to full conversation |
+
+| Name          | Purpose                                                                              |
+| ------------- | ------------------------------------------------------------------------------------ |
+| `OrderMemory` | Structured memory for recurring physical item needs (e.g., groceries)                |
+| `ChatMemory`  | Structured memory from conversational history                                        |
+| `EventMemory` | Structured memory for scheduled future events (sports, reservations, meetings, etc.) |
+

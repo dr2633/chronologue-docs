@@ -1,0 +1,29 @@
+
+### 4. Interaction Model 
+
+Cursor Calendar enables users to collaborate with agents through a chat-based interface, with actions that directly manipulate a shared timeline. Agents interpret natural language prompts to schedule, reflect, reprioritize, and summarize—grounded in structured memory traces and calendar data.
+
+### **Prompt Types and Agent Actions**
+
+Agents respond to time-bound instructions and reflective queries by generating structured events and memory updates. Some examples:
+
+- **Schedule Tasks**
+    
+    - `"Schedule a check-in every Friday at 10"`  
+        → Creates recurring `scheduled_event` traces with linked metadata
+        
+- **Recall Activity**
+    
+    - `"What did I work on last week?"`  
+        → Retrieves `goal` and `reflection` traces between defined timestamps
+        
+- **Reschedule with Constraints**
+    
+    - `"Reschedule lab sync based on everyone’s availability"`  
+        → Queries external calendars, adjusts `scheduled_event`, updates memory trace
+        
+- **Summarize Patterns**
+    
+    - `"Summarize my week"`  
+        → Groups recent goals, reflections, and tasks into a report-style memory output
+        

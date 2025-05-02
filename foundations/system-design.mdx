@@ -1,0 +1,91 @@
+System Design: Chronologue + MCP 
+
+Chronologue integrates structured memory traces, natural language input, and calendar-based coordination through a unified interface. It relies on the **Model Context Protocol (MCP)** to connect user input with event memory, agent reasoning, and calendar output.
+
+**Event Schema**
+
+All memory traces are converted into structured events, enabling both human review and agent planning. The core event types include:
+
+- `goal` – a future-oriented intent ("Finish literature review")
+    
+- `observation` – a passive or descriptive record ("Met with advisor")
+    
+- `reflection` – a qualitative note or summary ("Need to prioritize data cleanup")
+    
+- `scheduled_event` – a time-bound commitment ("Lab sync at 2PM Thursday")
+    
+Example (backend JSON trace format):
+
+```
+{
+  "type": "goal",
+  "title": "Submit IRB application",
+  "timestamp": "2025-04-24T09:00:00",
+  "duration": 60,
+  "linked_memory": ["trace_041", "trace_038"],
+  "notes": "Dependent on finishing protocol write-up"
+}
+```
+
+**MCP Integration**
+
+MCP provides the scaffolding to structure agent interaction across time. Key mechanisms:
+
+- **Memory Trace Ingestion**  
+
+    Conversational input is parsed into structured trace entries (goal, reflection, etc.)
+    
+- **Timeline Generation**  
+
+    MCP organizes these traces into a coherent timeline—annotated with metadata and available for `.ics` export.
+    
+- **Conversational Routing**  
+    Chat commands like `"schedule a writing block tomorrow"` are interpreted into:
+    
+    - Actionable event traces
+        
+    - `.ics` entries
+        
+    - Planning context for future agent tasks
+
+
+
+    **Calendar API Bridge**
+
+Calendar interoperability is a core feature. MCP can generate and ingest:
+
+- **`.ics` files** – Standards-compliant events compatible with Apple Calendar, Google Calendar, Outlook
+    
+- **Google Calendar API** – OAuth-authenticated event sync for read/write access
+    
+- **Structured Event I/O** – Sync back updated events into memory system for trace consistency
+
+```
+User Input → MCP → Trace Schema (Goal/Reflection/Event)
+           → Timeline Assembly → .ics Export
+           → Calendar Render → Agent Action
+                            ↘ Memory Update ↖
+```
+
+**User Interface and Editable Markdown Table**
+
+This is how the Chronologue interface is rendered in a chat-based or UI-driven interaction—clear, editable, and structured for both human interaction and `.ics` export:
+
+
+```
+| Time           | Task                      | Notes                          |
+|----------------|---------------------------|--------------------------------|
+| 07:30–08:00    | Morning routine           | Stretching, quick shower       |
+| 08:00–09:00    | Breakfast + Reading       | Light news or book time        |
+| 09:00–12:00    | Focus work block          | Deep work, no distractions     |
+| 12:00–13:00    | Lunch                     | Away from desk                 |
+| 13:00–15:00    | Meetings                  | Check calendar for links       |
+| 15:00–15:30    | Break                     | Walk or coffee                 |
+| 15:30–17:00    | Admin & Emails            | Inbox zero, light tasks        |
+| 17:00–18:00    | Workout                   | Gym or at-home routine         |
+| 18:00–19:00    | Dinner                    | Relaxed, no screens            |
+| 19:00–21:00    | Personal time / Projects  | Hobbies, learning, side work   |
+| 21:00–22:00    | Wind-down routine         | Read, reflect, sleep prep      |
+```
+
+This format can be edited via chat, programmatically parsed into `.ics` events, and be pushed back into the MCP memory system as scheduled traces.
