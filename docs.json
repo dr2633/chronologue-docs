@@ -26,8 +26,9 @@
             "group": "Foundations",
             "icon": "book",
             "pages": [
-              "foundations/system-design",
               "foundations/calendars-cognitive",
+              "foundations/prompt-examples",
+              "foundations/system-design",
               "foundations/interaction-model",
               "foundations/multisession"
             ]

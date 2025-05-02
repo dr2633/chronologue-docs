@@ -1,0 +1,261 @@
+
+
+
+## **Cursor Calendar Prompt Examples and Event Structures**
+
+### 1. **Create Event**
+
+**Prompt:**  
+Schedule a meeting with the dog walker on Thursday April 24th at 2pm in Madison Square Park.
+
+**Event Structure:**
+
+- Summary: Meeting with dog walker
+    
+- Start: 2025-04-24T14:00:00
+    
+- End: 2025-04-24T14:30:00
+    
+- Location: Madison Square Park
+    
+- Description: (optional)
+    
+- UID: dog_walker_20250424@memorysystem.ai
+    
+
+---
+
+### 2. **Reschedule Event**
+
+**Prompt:**  
+
+Move my yoga class on Thursday from 5:30pm to 7:30pm.
+
+**Event Structure (update):**
+
+- Summary: Yoga class
+    
+- Start: 2025-04-24T19:30:00
+    
+- End: 2025-04-24T20:30:00
+    
+- UID: yoga_class_20250424@memorysystem.ai
+    
+
+---
+
+### 3. **Delete Event**
+
+**Prompt:**  
+
+Cancel the all-team meeting on Wednesday at 2pm.
+
+**Agent Task:**
+
+- Locate event by summary + timestamp
+    
+- Delete via Calendar API using UID
+    
+
+---
+
+### 4. **Add Recurring Event**
+
+**Prompt:**  
+Add a 15-minute check-in with my research assistant every Friday at 10am.
+
+**Event Structure:**
+
+- Summary: Check-in with RA
+    
+- Start: 2025-04-25T10:00:00
+    
+- End: 2025-04-25T10:15:00
+    
+- Recurrence Rule: FREQ=WEEKLY;BYDAY=FR
+    
+- UID: ra_checkin_20250425@memorysystem.ai
+    
+
+---
+
+### 5. **Soft Scheduling / Suggestion**
+
+**Prompt:**  
+Find 30 minutes tomorrow afternoon for a deep work session.
+
+**Agent Task:**
+
+- Parse window: 2025-04-24T13:00:00 to 17:00:00
+    
+- Search for free time slot
+    
+- Add tentative calendar entry
+    
+
+---
+
+### 6. **Multi-Action Update**
+
+**Prompt:**  
+Push the chemistry tutoring to Saturday morning and move my call with Alex to Sunday night.
+
+**Agent Task:**
+
+- Identify and reschedule two events
+    
+- Event 1:
+    
+    - Summary: Chemistry tutoring
+        
+    - New Time: 2025-04-26T09:00:00
+        
+- Event 2:
+    
+    - Summary: Call with Alex
+        
+    - New Time: 2025-04-27T21:00:00
+
+***
+
+
+### 1. **Reflects Real Agent Usage**
+
+Most meaningful interactions with calendar agents will begin from **natural language prompts**, not direct `.ics` inputs or structured tool calls.
+
+- You’re simulating actual usage patterns: "schedule this", "move that", "when is..."
+    
+- It gives you a **direct path from interface → intent → execution**
+    
+
+### 2. **Tightly Couples Input with Outcome**
+
+- You can easily test whether:
+    
+    - The prompt is interpreted correctly
+        
+    - The right event is created/modified/deleted
+        
+    - The output aligns with expected `.ics` structure
+        
+
+This makes it ideal for both **unit tests** and **end-to-end agent simulations**.
+
+### 3. **Enables Dataset Generation + Fine-tuning**
+
+- You can generate a dataset of (prompt → event structure) pairs
+    
+- Fine-tune or supervise the Cursor Calendar agent with examples like:
+    
+    - Input: “Cancel my sync with Max tomorrow”
+        
+    - Target JSON: (event details to delete)
+        
+
+### 4. **Gives You Flexibility to Inject Memory**
+
+Prompt-centric workflows let you condition agent behavior on prior traces:
+
+- “Didn’t I already book lunch on Thursday?”
+    
+- “Move that reflection I wrote after the RA meeting”
+    
+
+This ties directly into the **MCP memory layer**.
+
+
+By grounding your agent in conversational prompts, you:
+
+- Build a usable **interface abstraction**
+    
+- Keep your pipeline modular (chat → intent → planning tool → calendar)
+    
+- Allow future agents (Claude, GPT, custom planner) to act through MCP in a consistent way
+
+**Develop a lightweight conversation-to-action test harness**, where each test includes:
+
+- `user_input`: natural language prompt
+    
+- `expected_tool_call`: e.g., `sync_traces_to_google([event])`
+    
+- `expected_event`: minimal structured event block
+    
+
+Use this both for:
+
+- MCP simulation testing
+    
+- Agent tool call grounding (especially for Cursor/GPT/Claude)
+
+
+Schedule, reschedule, delete, schedule to a specific calendar, suggested schedule (light), set recurring, end recurring, add collaborator, add location, change location
+
+Recall, summarize 
+
+Retrieve md format for editable interface
+
+```yaml
+tests:
+  - id: create_event_dogwalker
+    user_input: "Schedule a meeting with the dog walker on Thursday April 24th at 2pm in Madison Square Park."
+    expected_tool: convert_trace_to_ics
+    expected_event:
+      summary: "Meeting with dog walker"
+      start: "2025-04-24T14:00:00"
+      end: "2025-04-24T14:30:00"
+      location: "Madison Square Park"
+      uid: "dog_walker_20250424@memorysystem.ai"
+
+  - id: reschedule_yoga
+    user_input: "Move my yoga class on Thursday from 5:30pm to 7:30pm."
+    expected_tool: sync_traces_to_google
+    expected_event:
+      summary: "Yoga class"
+      start: "2025-04-24T19:30:00"
+      end: "2025-04-24T20:30:00"
+      uid: "yoga_class_20250424@memorysystem.ai"
+
+  - id: delete_team_meeting
+    user_input: "Cancel the all-team meeting on Wednesday at 2pm."
+    expected_tool: delete_event_by_uid
+    expected_event:
+      summary: "All-team meeting"
+      start: "2025-04-23T14:00:00"
+      uid: "team_meeting_20250423@memorysystem.ai"
+
+  - id: recurring_checkin
+    user_input: "Add a 15-minute check-in with my research assistant every Friday at 10am."
+    expected_tool: convert_trace_to_ics
+    expected_event:
+      summary: "Check-in with RA"
+      start: "2025-04-25T10:00:00"
+      end: "2025-04-25T10:15:00"
+      rrule: "FREQ=WEEKLY;BYDAY=FR"
+      uid: "ra_checkin_20250425@memorysystem.ai"
+
+  - id: soft_schedule
+    user_input: "Find 30 minutes tomorrow afternoon for a deep work session."
+    expected_tool: suggest_open_timeslot
+    expected_event:
+      summary: "Deep work session"
+      duration_minutes: 30
+      time_window:
+        start: "2025-04-24T13:00:00"
+        end: "2025-04-24T17:00:00"
+
+  - id: multi_reschedule
+    user_input: "Push the chemistry tutoring to Saturday morning and move my call with Alex to Sunday night."
+    expected_tool: sync_traces_to_google
+    expected_events:
+      - summary: "Chemistry tutoring"
+        start: "2025-04-26T09:00:00"
+        end: "2025-04-26T10:00:00"
+        uid: "tutoring_20250426@memorysystem.ai"
+      - summary: "Call with Alex"
+        start: "2025-04-27T21:00:00"
+        end: "2025-04-27T22:00:00"
+        uid: "call_alex_20250427@memorysystem.ai"
+
+
+```
+
