@@ -1,0 +1,106 @@
+
+
+Chronologue is a platform for turning structured memory (e.g., conversation history) into scheduled events using calendar APIs—enabling retrieval, coordination, and planning.
+
+It supports a bidirectional link between calendars and language models: events are generated from memory traces, and calendars in turn provide context for agent reasoning and decision-making.
+
+<Info>
+Read more in [Foundations](/foundations/bidirectional-loop).
+</Info>
+
+**The core goal of Chronologue is to give users and organizations agency and autonomy — the ability to steer memory and agent behavior through a familiar, editable interface: the calendar.**
+
+**For Users** 
+
+Chronologue provides an accessible interface for reviewing past interactions, scheduling future events, and coordinating actions over time—designed for reliability and clarity in daily workflows.
+
+**For Developers** 
+
+Chronologue works on your local device and uses clear data structures and function calls, making it easy to check, edit, and sync your calendar information reliably across calendar apps.
+
+<Info>
+  To get started, head to the [Quickstart Guide](/quickstart) or explore [Datasets](/examples/datasets). 
+</Info>
+
+## Core Components
+
+- **Memory Trace Ingestion**  
+    Structured memory traces (JSON) capturing tasks, reflections, goals, or events are ingested through a standardized API format.
+    
+- **Validation Layer**  
+    All traces are validated against a strict schema to ensure consistency, completeness, and compatibility with calendar event standards ([RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545)).
+    
+- **ICS Generation Engine**  
+    Memory traces are transformed into `.ics` events with properly formatted timestamps, UID generation, summaries, descriptions, and optional metadata fields (location, attendees).
+    
+- **Editing and Previewing**  
+    Generated events can be edited in place, with Markdown previews for human-friendly review before synchronization.    
+
+- **Calendar Synchronization Modules**  
+    Built-in modules allow direct syncing with:
+    
+    - Google Calendar API (OAuth2 authorized)
+        
+    - Apple Calendar (local `.ics` import or native API integration)
+
+    - Microsoft Graph and Outlook Calendar API 
+        
+- **Agent Compatibility**  
+
+    Chronologue provides a foundation for conversational agents and memory-grounded planners to operate over real-world time constraints, enabling "memory-to-action" pipelines in autonomous systems.
+    
+### Key Features
+
+- JSON-based memory trace ingestion and validation  
+- Automatic `.ics` file generation from structured traces  
+- UID preservation and robust timestamp management  
+- Editable event pipelines with Markdown preview output  
+- Integration pathways for conversation agents and planning systems  
+
+
+<CardGroup cols={2}>
+  <Card
+    title="Start with a Prompt"
+    icon="message-square"
+    href="/quickstart"
+  >
+    Learn how natural language gets converted into structured calendar actions
+  </Card>
+  <Card
+    title="Explore Datasets"
+    icon="database"
+    href="/examples/datasets"
+  >
+    Review real-world JSON traces and `.ics` examples to build on
+  </Card>
+  <Card
+    title="Understand the API"
+    icon="code"
+    href="/api"
+  >
+    Use the schema and function-call interface for agent scheduling
+  </Card>
+  <Card
+    title="Customize the Editor"
+    icon="edit"
+    href="/editor"
+  >
+    Learn how to edit traces via Markdown and preview before syncing
+  </Card>
+</CardGroup>
+
+
+-- 
+
+
+
+## Purpose 
+
+
+Chronologue gives you an accessible interface to review past interactions, plan upcoming events, and coordinate actions across time. It’s designed for reliability and clarity in daily workflows.
+
+
+Chronologue works locally and uses structured data pipelines. Its typed schemas, validated APIs, and `.ics` generation tools make it easy to inspect, edit, customize, and sync memory and scheduled events across calendar platforms.
+
+
+---

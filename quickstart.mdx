@@ -1,6 +1,5 @@
 ---
 title: 'Quickstart'
-description: 'Set up Chronologue to sync calendar events with your LLM'
 ---
 
 ### Getting Started
@@ -22,30 +21,76 @@ description: 'Set up Chronologue to sync calendar events with your LLM'
    cd chronologue
    ```
 
-3. **Initialize Project with `uv`**
+3. **Set Up the Environment**
 
    Initialize the project using `uv`:
 
    ```bash
    uv init
-   ```
-
-4. **Create Virtual Environment**
-
-   Create a virtual environment and activate it:
-
-   ```bash
    uv venv
    source .venv/bin/activate
    ```
 
-5. **Add Core Dependencies**
+4. **Add Core Dependencies**
+
+ Install from `requirements.txt`
+
+```bash
+uv pip install -r requirements.txt
+```
+
+5. 
+
+---
+
+## 6. (Optional) Set Up MCP and API Keys
+
+Chronologue supports memory-grounded planning using the `mcp` agent CLI and external calendar APIs.
+
+### Install Additional Dependencies
+
+```bash
+uv add "mcp[cli]" httpx
+```
+
+If installing locally with calendar sync 
+
+```bash
+brew install node
+```
+
+Run MCP Integration 
+
+```bash
+uv run mcp
+```
+
+### Configure API Keys
+
+Create a .env file in the root directory and populate it with your keys:
+
+```bash
+OPENAI_API_KEY=your-openai-key
+CLAUDE_API_KEY=your-anthropic-key
+GEMINI_API_KEY=your-gemini-key
+
+GOOGLE_CLIENT_CREDENTIALS=calendar/credentials.json
+GOOGLE_TOKEN_FILE=calendar/token.json
+```
 
 
-  Install from `requirements.txt` if legacy dependencies exist:
+### Run a Basic Test 
+
+ Run the following script to transform `.json` data to `.ics`:
 
    ```bash
-   uv pip install -r requirements.txt
+   python modules/export_ics.py
+   ```
+
+   Run this script to transform `.ics` to `.json` data for model context: 
+
+   ```bash
+   python modules/import_ics.py
    ```
 
 
