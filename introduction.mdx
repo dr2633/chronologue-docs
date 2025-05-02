@@ -1,17 +1,22 @@
 
-## Chronologue Documentation
+
+
+
+
 
 Chronologue is a platform for turning structured memory (e.g., conversation history) into scheduled events using calendar APIs—enabling retrieval, coordination, and planning.
 
 It supports a bidirectional link between calendars and language models: events are generated from memory traces, and calendars in turn provide context for agent reasoning and decision-making.
 
-## Language Models and Calendars: A Bidirectional Loop
+Read more in the Foundations section [here](/foundations/bidirectional) for more 
 
-Chronologue is designed around a key insight: **calendars are not just outputs of planning—they're also vital context for decision-making**.
+**For Users** 
 
-**For Users:** Chronologue provides a transparent interface for reviewing past interactions, scheduling future events, and coordinating actions over time—designed for reliability and clarity in daily workflows.
+Chronologue provides an accessible interface for reviewing past interactions, scheduling future events, and coordinating actions over time—designed for reliability and clarity in daily workflows.
 
-**For Developers:** Its local-first design and schema-driven architecture ensure memory traces can be validated, edited, and synchronized consistently across calendar systems.
+**For Developers** 
+
+Chronologue works on your local device and uses clear data structures and function calls, making it easy to check, edit, and sync your calendar information reliably across calendar apps.
 
 <Info>
   To get started, head to the [Quickstart Guide](/quickstart) or explore how [datasets](/datasets) are structured.
@@ -37,6 +42,8 @@ Chronologue is designed around a key insight: **calendars are not just outputs o
     - Google Calendar API (OAuth2 authorized)
         
     - Apple Calendar (local `.ics` import or native API integration)
+
+    - Microsoft Graph and Outlook Calendar API 
         
 - **Agent Compatibility**  
 
@@ -51,9 +58,6 @@ Chronologue is designed around a key insight: **calendars are not just outputs o
 - Integration pathways for conversation agents and planning systems  
 
 
-
-
-### Flow: Memory ↔ LLM ↔ Calendar
 
 <CardGroup cols={2}>
   <Card
