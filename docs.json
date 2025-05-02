@@ -23,6 +23,16 @@
             ]
           },
           {
+            "group": "Foundations",
+            "icon": "book",
+            "pages": [
+              "foundations/system-design",
+              "foundations/calendars-cognitive",
+              "foundations/interaction-model",
+              "foundations/multisession"
+            ]
+          },
+          {
             "group": "Concepts",
             "icon": "clock",
             "pages": [
