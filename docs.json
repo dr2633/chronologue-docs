@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Chronologue Documentation",
+  "name": "Chronologue",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
@@ -11,89 +11,89 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Get Started",
         "groups": [
           {
-            "group": "Getting Started",
+            "group": "Overview",
+            "icon": "rocket",
             "pages": [
               "introduction",
               "quickstart",
-              "development",
-              " api"
-            ]
-          },
-          {
-            "group": "Essentials",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "contact"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "Concepts",
         "groups": [
           {
-            "group": "API Documentation",
+            "group": "Event Lifecycle",
+            "icon": "clock",
             "pages": [
-              "api-reference/introduction"
+              "concepts/generate-events",
+              "concepts/event-retrieval",
+              "concepts/event-summarization"
             ]
           },
           {
-            "group": "Endpoint Examples",
+            "group": "Event Representation",
+            "icon": "brain",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "concepts/event-embeddings",
+              "concepts/mcp-integration"
+            ]
+          },
+          {
+            "group": "Calendar Integration",
+            "icon": "calendar-days",
+            "pages": [
+              "concepts/google-calendar",
+              "concepts/icalendar"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Examples",
+        "groups": [
+          {
+            "group": "Use Cases",
+            "icon": "list-check",
+            "pages": [
+              "examples/conversation-history",
+              "examples/sports-scheduling",
+              {
+                "group": "Events",
+                "icon": "ticket",
+                "pages": [
+                  "examples/live-events",
+                  "examples/restaurant-reservations"
+                ]
+              },
+              "examples/grocery-scheduling"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:hi@chronologue.ai"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Launch App",
+      "href": "https://chronologue.ai"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/dr2633/chronologue"
     }
   }
 }
