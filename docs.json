@@ -11,66 +11,38 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Get Started",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Get Started",
             "icon": "rocket",
             "pages": [
               "introduction",
               "quickstart",
               "contact"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Concepts",
-        "groups": [
+          },
           {
-            "group": "Event Lifecycle",
+            "group": "Concepts",
             "icon": "clock",
             "pages": [
               "concepts/generate-events",
               "concepts/event-retrieval",
-              "concepts/event-summarization"
-            ]
-          },
-          {
-            "group": "Event Representation",
-            "icon": "brain",
-            "pages": [
+              "concepts/event-summarization",
               "concepts/event-embeddings",
-              "concepts/mcp-integration"
-            ]
-          },
-          {
-            "group": "Calendar Integration",
-            "icon": "calendar-days",
-            "pages": [
+              "concepts/mcp-integration",
               "concepts/google-calendar",
               "concepts/icalendar"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Examples",
-        "groups": [
+          },
           {
-            "group": "Use Cases",
+            "group": "Examples",
             "icon": "list-check",
             "pages": [
               "examples/conversation-history",
               "examples/sports-scheduling",
-              {
-                "group": "Events",
-                "icon": "ticket",
-                "pages": [
-                  "examples/live-events",
-                  "examples/restaurant-reservations"
-                ]
-              },
+              "examples/live-events",
+              "examples/restaurant-reservations",
               "examples/grocery-scheduling"
             ]
           }
