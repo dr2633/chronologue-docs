@@ -1,0 +1,44 @@
+---
+title: 'Research Questions'
+---
+
+Chronologue explores the integration between language models and calendar integrations. The following research questions guide ongoing development efforts:
+
+<AccordionGroup>
+
+<Accordion title="Temporal Embedding and Tokens">
+  **Question**: How should structured memory traces (e.g. JSON event logs) be tokenized and embedded to preserve temporal granularity/order as well as semantic hierarchy and clustering during model input?
+
+  **Challenge**: Standard tokenization can destroy time alignment and flatten structured metadata.
+
+  **Focus**: Investigate serialization strategies (e.g. flattened JSON, tempo tokens, keyed CoT prompts) and evaluate the effect on model grounding fidelity in scheduling and follow-up tasks.
+</Accordion>
+
+<Accordion title="Function Calling and Validation">
+  **Question**: What is the optimal function-calling and schema design to allow LLMs to dynamically generate, edit, and validate `.ics` events from natural language input with maximum reliability?
+
+  **Challenge**: Formatting ambiguity and timezone misalignment in `.ics` generation pipelines.
+
+  **Focus**: Define typed schema for `schedule_event`, `edit_event`, `cancel_event`, and validate with strict schema enforcement and test-time checks. Evaluate model function calling across variable time expressions.
+</Accordion>
+
+<Accordion title="Latency of Calendar Integrations">
+  **Question**: How can syncing between external calendar APIs (e.g. Google Calendar) and LLM memory systems maintain low-latency feedback loops?
+
+  **Challenge**: UID mismatches, race conditions, and unsynchronized event state updates can break system coherence.
+
+  **Focus**: Design an event registry layer with version control, UID tracing, and live sync APIs to enable consistent updates from model output → calendar → model context.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+### Feedback & Collaboration
+
+- **Derek Rosenzweig**  
+- [Email](derek.rosenzweig1 [at] gmail.com)
+- [Github](https://github.com/dr2633)
+- [Derek's Calendar](https://cal.com/derek-rosenzweig-zpj68b/30min?overlayCalendar=true)
+  
+Feedback is welcome across both product and research fronts.
