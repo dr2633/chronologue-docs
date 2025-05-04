@@ -39,15 +39,9 @@ title: 'Quickstart'
 uv pip install -r requirements.txt
 ```
 
-5. 
-
----
-
-## 6. (Optional) Set Up MCP and API Keys
+5. **Set Up MCP and API Keys**
 
 Chronologue supports memory-grounded planning using the `mcp` agent CLI and external calendar APIs.
-
-### Install Additional Dependencies
 
 ```bash
 uv add "mcp[cli]" httpx
@@ -65,7 +59,7 @@ Run MCP Integration
 uv run mcp
 ```
 
-### Configure API Keys
+Configure API Keys
 
 Create a .env file in the root directory and populate it with your keys:
 
@@ -73,13 +67,14 @@ Create a .env file in the root directory and populate it with your keys:
 OPENAI_API_KEY=your-openai-key
 CLAUDE_API_KEY=your-anthropic-key
 GEMINI_API_KEY=your-gemini-key
+LLAMA_API_KEY=your-llama-key
 
 GOOGLE_CLIENT_CREDENTIALS=calendar/credentials.json
 GOOGLE_TOKEN_FILE=calendar/token.json
 ```
 
 
-### Run a Basic Test 
+6. **Run Test Scripts**
 
  Run the following script to transform `.json` data to `.ics`:
 
@@ -87,11 +82,12 @@ GOOGLE_TOKEN_FILE=calendar/token.json
    python modules/export_ics.py
    ```
 
-   Run this script to transform `.ics` to `.json` data for model context: 
+   Run this script to transform `.ics` to `.json`: 
 
    ```bash
    python modules/import_ics.py
    ```
+
 
 
 
