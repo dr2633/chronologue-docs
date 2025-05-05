@@ -1,0 +1,122 @@
+---
+title: "Import Calendar (ICS)"
+---
+
+### Overview 
+
+Chronologue also supports converting `.ics` files from your personal calendar into structured memory traces (`.json`) for processing, summarization, and re-ranking in grounding language model outputs and behavior. This feature allows events from external calendar systems to be made available for planning and coordination. 
+
+The primary script for this transformation is `modules/import_calendar.py` which reads `.ics` files, parses `VEVENT` blocks, and outputs `.json` memory traces. 
+
+From the root directory of the repository: 
+
+```
+python modules/import_calendar.py
+```
+
+#### `.ics` Input Example 
+
+The importer expects a standard-compliant `.ics` file with `VEVENT` blocks:
+
+```ics
+BEGIN:VEVENT
+UID:wetlab_sync-20250401@memorysystem.ai
+DTSTAMP:20250401T080000Z
+DTSTART:20250407T090000Z
+DTEND:20250407T091500Z
+SUMMARY:Weekly sync on lab operations
+DESCRIPTION:Weekly sync on lab operations and status updates.
+LOCATION:wetlab
+STATUS:CONFIRMED
+END:VEVENT
+```
+
+#### Pipeline 
+
+1. **Read `.ics` File** 
+
+Extracts content from each file in a specified input directory. 
+
+2. **Parse Events** 
+
+Identifies `VEVENT` blocks using regex aqnd extracts: 
+
+- title (from SUMMARY)
+
+- `content` (from DESCRIPTION)
+
+- `timestamp` (from DTSTART)
+
+- `end` (from DTEND)
+
+- `duration_minutes` (inferred from timestamps)
+
+- `location`, `uid`, `type`
+
+3. **Validate Memory Traces** 
+
+Ensures that parsed events conform to the memory schema via `validate_memory_trace()`. 
+
+4. **Write to `.json`**
+
+Stores converted event traces into JSON files. 
+
+5. **Next Step: Add md table for user revisions** 
+
+
+#### Key Functions 
+
+`parse_ics_datetime(dt_str)`
+
+Converts `YYYYMMDDTHHMMSSZ` to ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`).
+
+Used for both `DTSTART` and `DTEND`.
+
+`parse_ics_event(ics_text)`
+
+Parses a single `VEVENT` block and returns a `Dict` matching memory trace schema.
+
+Infers duration if `DTSTART` and `DTEND` are present.
+
+Adds "type": "calendar_event" to each parsed trace.
+
+`import_ics(filepath)`
+
+Reads `.ics` content, parses all `VEVENT` blocks, validates, and returns a list of event dictionaries.
+
+`save_events_to_json(events, output_path)`
+
+Dumps parsed event traces to a single `.json` file with the key "memory".
+
+`import_ics_from_directory(input_dir, output_dir)`
+
+Batch conversion: processes all .ics files in input_dir and saves `.json` files to `output_dir`.
+
+
+
+Ensure the input/output paths are correctly set in the __main__ section. By default:
+
+```
+input_dir = Path("data/calendar/raw")
+output_dir = Path("data/calendar/processed")
+```
+
+
+##### Customization Points 
+
+- Regex Block Matching: Use a different delimiter pattern if your calendar system adds metadata.
+
+- Validation Schema: Customize `validate_memory_trace` to enforce domain-specific fields (e.g., tags, user ID).
+
+- Trace Typing: Extend to include `meeting`, `deadline`, or user-defined tags from other fields (e.g., CATEGORIES).
+
+
+**Related Concepts**
+
+- [Export Calendar (ICS)](concepts/export-calendar.mdx)
+
+- [Event Retrieval](concepts/event-retrieval.mdx)
+
+- [iCalendar Integration](concepts/icalendar.mdx)
+
+- [Prompt Design Patterns](foundations/prompt-examples.mdx)

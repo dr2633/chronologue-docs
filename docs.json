@@ -27,15 +27,23 @@
             "group": "Concepts",
             "icon": "clock",
             "pages": [
-              "concepts/generate-events",
-              "concepts/event-retrieval",
+              "concepts/export-calendar",
+              "concepts/import-calendar",
               "concepts/event-summarization",
-              "concepts/event-embeddings",
+              "concepts/event-embeddings"
+            ]
+          },
+         
+          {
+            "group": "Integrations",
+            "icon": "clock",
+            "pages": [
               "concepts/mcp-integration",
               "concepts/google-calendar",
               "concepts/icalendar"
             ]
           },
+
           {
             "group": "Foundations",
             "icon": "book",
