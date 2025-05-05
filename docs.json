@@ -19,18 +19,8 @@
             "pages": [
               "introduction",
               "quickstart",
-              "research-questions"
-            ]
-          },
-          {
-            "group": "Foundations",
-            "icon": "book",
-            "pages": [
-              "foundations/calendars-cognitive",
-              "foundations/prompt-examples",
-              "foundations/system-design",
-              "foundations/interaction-model",
-              "foundations/multisession"
+              "research-questions",
+              "contact"
             ]
           },
           {
@@ -46,6 +36,18 @@
               "concepts/icalendar"
             ]
           },
+          {
+            "group": "Foundations",
+            "icon": "book",
+            "pages": [
+              "foundations/calendars-cognitive",
+              "foundations/prompt-examples",
+              "foundations/system-design",
+              "foundations/interaction-model",
+              "foundations/multisession"
+            ]
+          },
+          
           {
             "group": "Examples",
             "icon": "list-check",

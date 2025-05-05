@@ -1,5 +1,113 @@
 ---
-title: "Event Generation and Scheduling"
+title: 'Event Generation'
+---
+
+## Overview
+
+Chronologue's event generation pipeline converts structured memory traces (`.json`) into calendar events (`.ics`) following the iCalendar standard. This allows natural language input to produce concrete, time-aligned actions in external scheduling systems.
+
+The core script powering this transformation is `modules/export_ics.py`.
+
+
 
 ---
-_Content coming soon._
+
+## Gold Standard: `.ics` Format
+
+Chronologue conforms to a minimal but valid iCalendar `VEVENT` structure:
+
+```ics
+BEGIN:VEVENT
+UID:lab_ops-20240407@memorysystem.ai
+DTSTAMP:20250401T080000Z
+DTSTART:20240407T090000Z
+DTEND:20240407T091500Z
+SUMMARY:Temperature in incubator #3 drifted 1.5°C above target during morning run.
+DESCRIPTION:Temperature in incubator #3 drifted 1.5°C above target during morning run.
+LOCATION:wetlab_sync
+STATUS:CONFIRMED
+END:VEVENT
+```
+
+All fields are derived from the memory trace or inferred via defaults. A working .ics is generated using:
+
+
+```
+ics_string = generate_ics_string(memory_trace)
+```
+
+
+1. Loads .json memory trace files
+
+2. Validates trace entries
+
+3. Generates VEVENTs
+
+4. Writes a consolidated `.ics` calendar
+
+
+### Key Functions and Parameters for Customization
+
+`resolve_duration_minutes(trace)`
+
+- Parses flexible user duration formats: 2h, 30m, 1:00-2:30, or "one hour"
+
+- Customize: Default duration (currently 30), upper bound, parsing logic
+
+`generate_uid(title, date)`
+
+- Constructs a globally unique UID from task ID and date
+
+- Customize: Change UID domain, format, or link to external systems
+
+`generate_summary_title(content)`
+
+- Uses OpenAI to create a concise SUMMARY field
+
+- Fallbacks to truncating raw content if LLM fails
+
+Customize: Model, max length, prompt template
+
+`generate_ics_string(trace)`
+
+- Assembles a VEVENT from a single memory trace
+
+- Includes SUMMARY, DESCRIPTION, LOCATION, DTSTART, DTEND, UID, STATUS
+
+`write_consolidated_ics(events, output_path)`
+
+- Writes header, VEVENT blocks, and footer into a single .ics file
+- Customize: PRODID, versioning metadata, newline style (Windows/iCal)
+
+### Opportunities for Personalization
+
+- Chronologue encourages local customization for different user or organization memory systems:
+
+- Duration interpretation for different workflows (e.g. lab vs. meetings)
+
+- LLM-based title summarization vs. rules-based
+
+- Structured description fields for reflection, chat links, metadata
+
+- Custom UID namespaces for cross-platform syncing
+
+- Flexible timestamp parsing and formatting
+
+**Testing Output Format**
+
+Use test_ics_format() to generate a sample .ics file and validate against the expected template:
+
+```
+python modules/export_ics.py
+```
+
+This writes a file test_output.ics to inspect the generated format against the gold standard.
+
+
+**Related Concepts**
+
+- [Event Retrieval](concepts/event-retrieval.mdx)
+
+- [iCalendar Integration](concepts/icalendar.mdx)
+
+- [Prompt Design Patterns](foundations/prompt-examples.mdx)
