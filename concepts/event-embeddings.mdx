@@ -1,4 +1,79 @@
 ---
-title: "Event Embeddings"
+title: "Calendar Embeddings"
 ---
-_Content coming soon._
+
+## Overview
+
+Chronologue supports embedding memory traces using OpenAI’s text-embedding-3-small model. This allows textual memory (e.g., reflections, goals, observations) to be projected into a 1536-dimensional vector space suitable for semantic search, clustering, or similarity-based ranking.
+
+The primary embedding logic is defined in `modules/embed_memory_traces.py`.
+
+## Embedding Format Standard
+
+Each memory trace receives an additional field:
+
+```json
+{
+  "id": "trace_014",
+  "type": "observation",
+  "content": "Checked all incubator temps and reset incubator #3.",
+  "timestamp": "2025-04-17T09:03:00",
+  "embedding": [0.013, -0.022, ..., 0.005]  // Length 1536
+}
+```
+
+Embeddings are stored inline in the JSON and written to *_embedded.json files in the output directory.
+
+## Key Functions and Parameters for Customization
+
+**get_openai_embedding(text: str) -> List[float]**  
+- Calls OpenAI’s API with the "text-embedding-3-small" model  
+- Returns a 1536-dim vector  
+- Customize: switch to "text-embedding-3-large" if higher fidelity is needed
+
+**embed_trace(trace: Dict) -> List[float]**  
+- Extracts content and returns its embedding  
+- Customize: embed title, notes, or concatenated fields for richer signals
+
+**embed_memory_traces(traces: List[Dict], overwrite: bool = False) -> List[Dict]**  
+- Embeds all traces, skipping if existing embeddings are present (unless overwrite=True)  
+- Customize: add logging, batch embedding, or progress bars
+
+## File IO and CLI Behavior
+
+This script performs batch embedding of memory trace files:
+
+1. Loads all `.json` files in `data/conversation/raw/`  
+2. Embeds each trace (if needed)  
+3. Writes updated traces to `data/conversation/embedding/` with `_embedded.json` suffix
+
+Run with:  
+
+`python modules/core/embeddings.py`
+
+## Applications: Ranking and Clustering
+
+Embedding memory traces enables advanced behavior:
+
+### Ranking  
+- Use cosine similarity or dot product to compare a new query (embedded) to existing memory traces  
+- Top-k nearest traces can condition LLM reasoning (retrieval-augmented CoT)  
+- Tools: FAISS, ScaNN, PyTorch cosine similarity  
+- Embeddings can be ranked not only by semantic similarity but also by **temporal proximity**, allowing agents to prioritize contextually recent or chronologically relevant events  
+- Combine semantic and temporal scores (e.g., weighted average or custom kernel) for better personalization and relevance
+
+
+### Clustering for Organization  
+- Group related reflections or observations 
+- Visualize user themes, summarize weeks, and build agendas with calendar themes
+
+
+## Related Concepts
+
+
+- [Import Calendar](concepts/import-calendar.mdx) — convert `.ics` files into JSON memory traces to embed calendar events alongside natural language memories  
+- [Event Retrieval](concepts/export-calendar.mdx) — use embeddings from memory traces to prioritize, filter, or retrieve relevant calendar events during planning or summarization
+
+
+
+
