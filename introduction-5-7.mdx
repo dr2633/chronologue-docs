@@ -1,0 +1,128 @@
+---
+title: 'Introduction'
+---
+
+Chronologue is a tool that connects **natural language input with calendar APIs**, allowing users and agents to plan, reflect, and coordinate over time.
+
+It transforms natural language prompts, structured JSON memory traces, or editable notes into .ics calendar events. In reverse, it uses calendar data to provide structured context to language models and autonomous agents—grounding their responses in the user's real schedule.
+
+<Accordion title="How Chronologue Connects Language Models to Calendars">
+By connecting language models to calendar systems, Chronologue enables agents to:
+
+- **Generate** calendar events from natural language memory traces (e.g., goals, reflections, observations).
+- **Ground** responses and plans in real-world schedules, time constraints, and commitments.
+- **Update** calendars with new structured events based on conversation context.
+- **Retrieve** time-based context to improve coherence, relevance, and coordination in agent outputs.
+
+This **bidirectional loop** ensures that both humans and agents can coordinate over time with transparency and adaptability.
+
+Built for both user workflows and AI-driven agent scheduling, Chronologue transforms structured conversational histories, goals, observations, and planned actions into validated `.ics` events—ready for synchronization with Google Calendar, Apple Calendar, and other platforms.
+</Accordion>
+
+---
+
+## Core Components
+
+- **Memory Trace Ingestion**  
+  Accepts structured JSON memory traces (goals, observations, tasks, events) through a standardized API.
+
+- **Validation Layer**  
+  Enforces schema constraints to ensure clean formatting, required fields, and calendar compatibility ([RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545)).
+
+- **ICS Generation Engine**  
+  Converts traces and function calls into `.ics` files with UIDs, timestamps, recurrence, and metadata.
+
+- **Editing and Previewing**  
+  Users can interact with events in Markdown before syncing — providing a transparent editing layer between model and calendar.
+
+- **Calendar Synchronization Modules**  
+  Supports integration with:
+  - Google Calendar (OAuth2)
+  - Apple Calendar (local or native)
+  - Microsoft Outlook via Microsoft Graph API
+
+- **Agent Compatibility**  
+  Designed to support conversational agents, memory planners, and multi-agent scheduling frameworks.
+
+---
+
+
+<Info>
+To get started, head to the [Quickstart Guide](/quickstart) or explore [Datasets](/examples/datasets).
+</Info>
+
+
+## Workflow Overview
+
+| **Input Type**              | **What You Provide**                                                                 | **Chronologue Produces**                                                  | **You Can Then**                                                                 |
+|-----------------------------|---------------------------------------------------------------------------------------|---------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| **Natural Language Prompt** | _"Schedule a meeting with Sam next Thursday at 2pm."_                                | A parsed function call → `.ics` event                                     | Export to Google/Apple Calendar, or inject into agent planning                  |
+| **JSON Memory Trace**       | `{ "type": "goal", "title": "Submit IRB", "timestamp": "2025-05-02T09:00:00Z" }`     | A structured event or CoT input → `.ics` event or planning context        | Generate calendar entries or feed into agent reasoning                          |
+| **Markdown Table**          | `- [ ] Submit IRB application at 9am Friday` (in editable `.md` format)              | A cleaned, structured event object                                        | Review/edit via UI, then commit changes to schedule                             |
+| **ICS Calendar Event**      | A `.ics` file exported from an external calendar                                     | Structured context (event title, time, recurrence, etc.) for the model    | Use calendar data to ground LLM responses and inform ongoing coordination       |
+
+
+
+## Research Questions
+
+<AccordionGroup>
+
+<Accordion title="Temporal Embedding and Tokens">
+**Question**: How should structured memory traces (e.g. JSON event logs) be tokenized and embedded to preserve temporal granularity/order as well as semantic hierarchy and clustering during model input?
+
+**Focus**: Investigate serialization strategies (e.g. flattened JSON, tempo tokens, keyed CoT prompts) and evaluate their effect on model grounding fidelity.
+</Accordion>
+
+<Accordion title="Function Calling and Validation">
+**Question**: What is the optimal function-calling and schema design to allow LLMs to dynamically generate, edit, and validate `.ics` events from natural language input with maximum reliability?
+
+**Focus**: Define strict schemas for scheduling actions and test their robustness against varied time expressions and format ambiguity.
+</Accordion>
+
+<Accordion title="Latency of Calendar Integrations">
+**Question**: How can syncing between external calendar APIs (e.g. Google Calendar) and LLM memory systems maintain low-latency feedback loops?
+
+**Focus**: Build version-controlled registries with UID tracing to ensure event coherence between LLM reasoning and real-world calendar state.
+</Accordion>
+
+</AccordionGroup>
+
+## Contact
+
+- **Email**: derek.rosenzweig1@gmail.com  
+- **GitHub**: [dr2633](https://github.com/dr2633)  
+- **LinkedIn**: [Derek Rosenzweig](https://www.linkedin.com/in/derek-rosenzweig-511644114)  
+- **Schedule a Meeting**: [30-minute Chat](https://cal.com/derek-rosenzweig-zpj68b/30min?overlayCalendar=true)
+
+## Explore Chronologue
+
+<CardGroup cols={2}>
+  <Card
+    title="Start with a Prompt"
+    icon="message-square"
+    href="/quickstart"
+  >
+    Learn how natural language gets converted into structured calendar actions
+  </Card>
+  <Card
+    title="Explore Datasets"
+    icon="database"
+    href="/examples/datasets"
+  >
+    Review real-world JSON traces and `.ics` examples to build on
+  </Card>
+  <Card
+    title="Understand the API"
+    icon="code"
+    href="/api"
+  >
+    Use the schema and function-call interface for agent scheduling
+  </Card>
+  <Card
+    title="Customize the Editor"
+    icon="edit"
+    href="/editor"
+  >
+    Learn how to edit traces via Markdown and preview before syncing
+  </Card>
+</CardGroup>
