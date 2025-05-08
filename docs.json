@@ -18,9 +18,7 @@
             "icon": "rocket",
             "pages": [
               "introduction",
-              "quickstart",
-              "research-questions",
-              "contact"
+              "quickstart"
             ]
           },
           {
@@ -29,7 +27,6 @@
             "pages": [
               "concepts/export-calendar",
               "concepts/import-calendar",
-              "concepts/event-summarization",
               "concepts/event-embeddings"
             ]
           },
@@ -48,11 +45,9 @@
             "group": "Foundations",
             "icon": "book",
             "pages": [
-              "foundations/calendars-cognitive",
               "foundations/prompt-examples",
               "foundations/system-design",
-              "foundations/interaction-model",
-              "foundations/multisession"
+              "foundations/interaction-model"
             ]
           },
           

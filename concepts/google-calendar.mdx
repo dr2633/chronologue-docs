@@ -1,74 +1,113 @@
 ---
-title: "Google Calendar Sync" 
+title: "Google Calendar Integration"
 ---
 
-### Setting Up Google Calendar API Credentials 
 
-- [Google Calendar API Overview](https://developers.google.com/workspace/calendar/api/guides/overview)
+This guide helps developers connect memory trace data with Google Calendar by converting structured JSON to `.ics` files and syncing them using the Google Calendar API.
+
+## Overview
+
+This module enables end-to-end calendar integration:
+
+- Converts memory traces (JSON) to `.ics` files  
+- Authenticates Google Calendar access  
+- Syncs events from `.ics` to the user's Google Calendar  
+
+## Setup Instructions
+
+### 1. Create Google Cloud Project
+
+Google Cloud Console: https://console.cloud.google.com/
+
+- Select or create a project  
+- Navigate to **APIs & Services → Library**  
+- Enable **Google Calendar API**
+
+### 2. Enable Calendar API
+
+Follow the official quickstart guide:  
+https://developers.google.com/calendar/api/quickstart/python
+
+### 3. Create OAuth 2.0 Credentials
+
+- Go to **APIs & Services → Credentials**  
+- Click **+ CREATE CREDENTIALS** → **OAuth client ID**  
+- If prompted to configure the consent screen:  
+  - Choose "External", click "Create"  
+  - Fill in App name, support email, contact info  
+  - Click "Save and Continue" through remaining steps
+
+- On OAuth creation page:
+  - Application type: Desktop App  
+  - Name: `Calendar Sync Local`  
+  - Click "Create"
+
+### 4. Download and Store Credentials
+
+- After creation, download the JSON file  
+- Save as:
+
+  `calendar/credentials.json`
+
+- Add to `.gitignore`:
+
+  `calendar/credentials.json`
+  `calendar/token.json`
+
+## Run the Sync Script
+
+From the project root:
+
+```
+python modules/calendar_io/sync_google_json.py
+```
+
+On first run:
+
+- Auth flow opens in browser  
+- On success, `token.json` is generated  
+- Future runs reuse the token unless revoked
+
+## Python Module Overview
+
+### authenticate_google()
+
+Handles the full OAuth authentication lifecycle:
+
+- Loads existing token from `calendar/token.json` if available  
+- Falls back to browser-based auth via `InstalledAppFlow`  
+- On success, stores updated credentials for reuse
+
+### convert_json_folder_to_ics(input_dir, output_dir)
+
+- Parses each `.json` memory file in `input_dir`  
+- Validates traces via `validate_memory_trace(trace)`  
+- Generates `.ics` format VEVENT strings  
+- Outputs `.ics` calendar files to `output_dir`
+
+Example Data I/O:
+
+```
+input_dir = Path("data/conversation/raw")  
+output_dir = Path("data/conversation/processed")  
+convert_json_folder_to_ics(input_dir, output_dir)
+```
+
+### `parse_ics_and_sync(ics_path, service)`
+
+- Parses `.ics` file using `ics.Calendar`  
+- Builds Google Calendar payloads  
+- Sends each event to Google Calendar using:
+
+  `service.events().insert(calendarId="primary", body=payload).execute()`
+
+- Prints status and error messages
+
+## Security & Best Practices
+
+- Never commit `credentials.json` or `token.json` to version control  
+- Rotate or revoke OAuth tokens as needed  
+- Log sync actions for debugging and traceability
 
 
-Here is a sguide to walk through creating OAuth 2.0 credentials to enable access to the Google Calendar API for the script `modules/sync_google.py`. 
-
-
-**Step 1: Create a Google Cloud Project**
-
-1. Go to Google Cloud Console: https://console.cloud.google.com/
-2. Click the project dropdown in the top left. 
-3. Select "New Project" and give it a name. 
-4. Click "Create" and wait for the project to initialize. 
-
-
-**Step 2: Enable the Calendar API**
-
-1. In the Google Cloud Console, select your new project. 
-2. Navigate to: APIs and Services --> Library 
-3. Search for "Google Calendar API" 
-4. Click "Enable" 
-
-**Step 3: Create OAuth 2.0 Credentials**
-
-1. Go to APIs & Services --> Credentials 
-2. Click "+ CREATE CREDENTIALS" → "OAuth client ID"
-3. If prompted to configure the consent screen:
-
-- Choose "External" and click "Create"
-
-- Fill in the App name, User support email, and Developer contact information
-
-- Click "Save and Continue" through all other steps (you can skip scopes and test users)
-
-4. On the "Create OAuth client ID" page:
-
-- Application type: Desktop App
-
-- Name: Calendar Sync Local
-
-- Click "Create"
-
-
-**Step 4: Download Your credentials.json File** 
-
-1. After creation, a dialog will show your new OAuth client.
-
-2. Click "Download JSON" and save it to:
-
-`calendar/credentials.json`
-
-3. Make sure file is included in .gitignore to avoid committing it to version control.
-
-**Step 5: Run the Script** 
-
-1. Once set up, test the OAuth flow:
-
-`python sync_google.py`
-
-- A browser window will open to authenticate your Google account.
-
-- After you authorize access, a file token.json will be created automatically.
-
-- Subsequent runs will reuse this token unless revoked or expired.
-
-
-
-<!-- https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification?hl=en#projects-used-in-dev-test-stage -->
 
