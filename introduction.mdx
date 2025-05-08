@@ -18,10 +18,13 @@ By connecting language models to calendar systems, Chronologue enables agents to
 This **bidirectional loop** ensures that both humans and agents can coordinate over time with transparency and adaptability.
 
 
-<img height="200" src="/path/image.jpg" />
+
+<img height="20" src="./images/cursor-cal.jpg" />
 
 ---
 
+
+<Accordion title="Table of Contents">
 ### Table of Contents
 
 - **1. Introduction**
@@ -63,6 +66,7 @@ This **bidirectional loop** ensures that both humans and agents can coordinate o
   - API keys and environment setup  
   - Running the Streamlit app  
   - Syncing your first memory trace  
+</Accordion>
 
 ---
 
@@ -86,7 +90,7 @@ Users can interact through a table-based UI, chat interface, or calendar interfa
 
 - **Editable** — Update, remove, or annotate memory traces (e.g., conversation history, scheduled events, reflections).
     
-- **Promptable** — Ask questions or issue commands (e.g., “What did I work on last Friday?” or “What should I focus on this Friday?”), with responses grounded in past calendar data.
+- **Promptable** — Ask questions or issue commands (e.g., "What did I work on last Friday?" or "What should I focus on this Friday?"), with responses grounded in past calendar data.
 
 - **Steerable Agents**  
 
@@ -94,11 +98,11 @@ Chronologue enables agents that act on behalf of the user, grounded in structure
 
 Users maintain control through:
 
-- **Approval and editing** of any agent-generated event before it’s added to the calendar.
+- **Approval and editing** of any agent-generated event before it's added to the calendar.
     
 - **Review of all actions** in a familiar, transparent calendar interface.
     
-- **Direct prompting** of agents to take specific actions (e.g., “Plan my next study session,” “Reschedule missed tasks from last week”).
+- **Direct prompting** of agents to take specific actions (e.g., "Plan my next study session," "Reschedule missed tasks from last week").
     
 - **Orchestration over time** by embedding memory, feedback, and scheduling preferences into the planning workflow.
     
@@ -112,25 +116,25 @@ Chronologue prioritizes autonomy: agents respond to user instruction — users d
 
 View, filter, and annotate past memory traces and calendar events.
 
-Example: “What were my goals last week?”
+Example: "What were my goals last week?"
 
 **Plan and Schedule**
 
 Use natural language to generate new events or plans.
 
-Example: “Schedule a 45-minute workout on Friday morning.”
+Example: "Schedule a 45-minute workout on Friday morning."
 
 **Catch Up and Reschedule**
 
 Identify incomplete tasks and reschedule them with model support.
 
-Example: “What did I miss this week? Reschedule to next open slot.”
+Example: "What did I miss this week? Reschedule to next open slot."
 
 **Summarize and Follow Up**
 
 Generate weekly summaries and follow-up suggestions based on past actions.
 
-Example: “Summarize my progress this week.”
+Example: "Summarize my progress this week."
 
 **Calendar Sync and Integration**
 
@@ -188,3 +192,96 @@ All agent-generated actions are staged for review before execution. Users can:
 
 - Maintain full oversight over automated scheduling behavior
 
+---
+## System Integration
+
+Chronologue bridges internal memory traces with external calendar platforms using standardized formats and API-based syncing.
+
+**`.ics` File Generation and Import/Export**
+
+Chronologue converts structured memory traces into `.ics` (iCalendar) files to enable:
+- Exporting planned events into calendar apps
+- Importing existing calendars as memory traces
+- Validating and preserving event metadata (e.g., `UID`, `DTSTART`, `SUMMARY`)
+
+**Google Calendar API Setup and Sync**
+
+Chronologue supports bi-directional sync with Google Calendar using OAuth 2.0 and the Google Calendar API:
+- Fetch user events and convert them into memory traces
+- Push agent-generated events directly into Google Calendar
+- Maintain event UID consistency for future updates or deletions
+
+Requires setup of:
+- `credentials.json` and `token.json` for authentication
+- Scoped access for `calendar.readonly` and `calendar.events`
+
+**iCalendar Compatibility**
+
+Generated `.ics` files are fully compatible with:
+- Apple Calendar (macOS and iOS)
+- Outlook and other `.ics`-compliant applications
+
+This ensures that even non-Google users can benefit from Chronologue's memory-based scheduling features.
+
+**FastAPI Endpoints**
+
+Chronologue exposes a structured API for interaction with agents and external systems:
+
+- `GET /context`  
+  Return a filtered set of memory traces relevant to a given time range or query.
+
+- `POST /plan`  
+  Accept a prompt and memory context, returning a structured plan (e.g., proposed events).
+
+- `POST /act`  
+  Commit changes to the memory trace store or calendar state based on approved agent actions.
+
+These endpoints power the MCP (Model Context Protocol) loop and can be called from external interfaces, including the Streamlit app and CLI tools.
+
+---
+
+## Research Questions 
+
+<AccordionGroup>
+
+<Accordion title="Duration Estimation">
+
+
+How accurately can language models estimate how long a user-specific task will take?
+
+- Explore conditional duration modeling based on user feedback, history, and task type  
+- Evaluate grounded time distributions (mean, variance, confidence intervals)  
+- Use these estimates to improve calendar slot suggestions and adaptive scheduling
+
+</Accordion>
+
+<Accordion title="Tempo Tokens and Embeddings">
+
+How should structured memory traces (e.g., JSON event logs) be serialized and embedded to preserve temporal and semantic structure?
+
+- Design temporal tokens (e.g., `<tempo:2024-05-08T09:00Z>`) for model prompts  
+- Explore serialization strategies that retain time order and task dependencies  
+- Analyze effects on grounding fidelity, coherence, and chronological reasoning
+
+</Accordion>
+
+<Accordion title="Memory Summarization and Ranking">
+
+What are effective strategies for compressing or prioritizing long-term memory traces for in-context planning?
+
+- Compare extractive, abstractive, and mixed summarization techniques  
+- Develop retrieval and ranking methods based on time relevance, recurrence, or user feedback  
+- Align summarization granularity with planning horizon
+
+</Accordion>
+
+<Accordion title="Personalization and Feedback">
+
+How can agent behavior improve over time based on explicit and implicit user feedback?
+
+- Track edits, approvals, rejections, and timing behavior to learn user preferences  
+- Adapt scheduling suggestions and memory retrieval dynamically
+
+</Accordion>
+
+</AccordionGroup>
