@@ -17,7 +17,8 @@ By connecting language models to calendar systems, Chronologue enables agents to
 
 This **bidirectional loop** ensures that both humans and agents can coordinate over time with transparency and adaptability.
 
-Built for both user workflows and AI-driven agent scheduling, Chronologue transforms structured conversational histories, goals, observations, and planned actions into validated `.ics` events—ready for synchronization with Google Calendar, Apple Calendar, and other platforms.
+
+<img height="200" src="/path/image.jpg" />
 
 ---
 
@@ -143,4 +144,47 @@ Hands-on Jupyter notebook demonstrating a sample workflow and data format (event
 
 🖥 Streamlit App Demo
 Launch the interactive interface to explore your memory traces and test agent behaviors in real time.
+
+
+## Agent Architecture
+
+Chronologue agents translate user intent into structured calendar actions using prompt-based reasoning, function calling, and memory-grounded context.
+
+**Prompt and Tool Calling**
+
+Chronologue uses language models (e.g., OpenAI with function calling) to interpret user prompts and generate structured commands such as add_event, edit_event, or reschedule_event. These tools enforce a controlled API for agent behavior, ensuring traceable and editable outputs.
+
+**Event Schema and Trace Conversion**
+
+User inputs and model outputs are structured as memory traces in a standardized JSON format. These traces include fields like:
+
+- `type` (e.g., `calendar_event`, `goal`, `reflection`)
+
+- `timestamp`, `title`, `content`, `duration`, `uid`
+
+- `linked_event_uid` for event relationships
+
+This schema enables trace-to-event conversion for `.ics` generation and calendar syncing.
+
+**Planning and Execution Cycle (MCP Protocol)**
+
+Chronologue implements the Model Context Protocol (MCP) to structure the flow of agent behavior:
+
+`/context` – Retrieves relevant memory traces
+
+`/plan` – Uses LLM to generate structured planning output
+
+`/act` – Applies validated changes to memory or calendar state
+
+This loop enables transparent, inspectable agent actions over time.
+
+**User Approval and Edit Layer**
+
+All agent-generated actions are staged for review before execution. Users can:
+
+- Inspect and edit proposed changes in the `calendar/table` view
+
+- Accept, modify, or reject suggestions
+
+- Maintain full oversight over automated scheduling behavior
 
