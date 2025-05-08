@@ -1,4 +1,149 @@
 ---
-title: "Model Context Protocol"
+title: 'Model Context Protocol (MCP)'
 ---
-_Content coming soon._
+
+## Overview
+
+Chronologue integrates the [Model Context Protocol (MCP)](https://github.com/modelcontextprotocol) to enable structured memory access, event scheduling, and tool invocation via standardized agent interfaces.
+
+This implementation supports:
+
+- Serving memory traces over a FastAPI or stdio MCP server
+- Scheduling calendar events through Google Calendar API
+- Converting `.json` memory traces to `.ics` format
+- Running OpenAI or Claude-based ReAct loops to populate and update the calendar
+
+## MCP Server Setup
+
+The server exposes tools and resources via either `stdio_server` or `FastMCP` (FastAPI-based):
+
+- **Tool: `sync_to_google_calendar`**  
+  Sync `.json` memory traces to a Google Calendar  
+- **Tool: `generate_embedding`**  
+  Generate OpenAI embeddings for trace content  
+- **Tool: `convert_trace_to_ics`**  
+  Convert memory trace to `.ics` string for calendar export  
+
+Scripts:
+- `server.py` (stdio server)
+- `server_google_calendar.py` (FastAPI)
+
+Run with:
+
+```
+python mcp/server.py  
+```
+or  
+
+```
+python mcp/server_google_calendar.py
+```
+
+## MCP Client: Chat + Tool Invocation
+
+The client connects to the MCP server, lists available tools, and forwards user queries through a Claude (or OpenAI) chat loop.
+
+Key features:
+- Uses Claude 3.5 Sonnet API with tools attached
+- Handles tool calls like `sync_to_google_calendar`, embedding generation
+- Supports a full interactive REPL
+
+Script:
+- `client.py`
+
+Run with:
+
+```
+python mcp/client.py 
+```
+
+## Calendar Tooling and Integration
+
+Chronologue exposes structured tools to bridge memory traces and calendar APIs:
+
+### Key Tools
+
+- `convert_trace_to_ics(trace: dict) -> str`  
+  Converts a single memory trace into a VEVENT-compliant `.ics` string
+
+- `sync_traces_to_google(traces: list[dict]) -> str`  
+  Sends memory traces to Google Calendar using OAuth-authenticated API
+
+- `load_memory_file(file_path: str) -> list[dict]`  
+  Loads structured memory from a `.json` file
+
+Defined in:
+- `server_google_calendar.py`
+
+Google Calendar setup requires:
+- `calendar/credentials.json`
+- `calendar/token.json`
+
+Scopes used:  
+`['https://www.googleapis.com/auth/calendar']`
+
+## MCP Resources
+
+Memory traces can be exposed as structured resources via MCP:
+
+- `calendar://pending_goals`  
+  All `goal`-type memory traces with `completion_status: pending`
+
+- `calendar://week_summary/{iso_week}`  
+  All traces from the specified ISO week (`2025-W18`)
+
+- `calendar://trace_by_id/{trace_id}`  
+  Lookup a specific memory trace by ID
+
+These allow downstream agents or apps to reflect, plan, or retrieve specific event blocks.
+
+## Agent Loop (Planner + Executor)
+
+Chronologue supports integration with OpenAI or Claude models to generate schedules:
+
+1. Query the MCP server for memory or context blocks  
+2. Pass them into a prompt:  
+   _"Given the user's upcoming goals and availability, what events should be scheduled this week?"_  
+3. Receive a response in the form of `MCPContextBlock(type="calendar_event")`
+4. Sync to calendar using tools
+
+This loop is defined in the `process_query()` and `chat_loop()` methods of the `MCPClient`.
+
+## Optional: Custom UI for Calendar + Agent Logs
+
+For deeper integration or review:
+
+- **Top panel**: MCP-derived upcoming events  
+- **Side panel**: agent chat logs and memory trace history  
+- **Bottom panel**: annotate traces, schedule goals, or trigger planner  
+
+Tools:
+- `Streamlit` or `Flet` for simple UI prototyping  
+- `Tempo Tokens`, feedback inputs, and calendar visualizations
+
+## Example Usage
+
+Run the FastAPI-based MCP server and query events for the week:
+
+python server_google_calendar.py  
+curl http://localhost:8000/context?type=calendar_event&last_n=5
+
+Trigger syncing memory to calendar:
+
+```
+python mcp/client.py 
+python mcp/server.py  
+```
+
+# Then: Type "Sync last session to calendar"
+
+## Summary
+
+Chronologue’s MCP backend provides a powerful interface for:
+
+- Agent reflection, planning, and memory access  
+- Tool invocation via structured protocols  
+- Real-world event scheduling grounded in memory  
+- Integrating `.ics`, `.json`, and calendar APIs in a unified loop
+
+Use MCP as the bridge between memory traces, LLM agents, and the real-world temporal context.
