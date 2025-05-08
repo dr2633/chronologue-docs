@@ -2,6 +2,8 @@
 title: 'Introduction'
 ---
 
+#### Chronologue: Calendar-Grounded Agents and User Interface
+
 **Chronologue** is a memory-grounded planning system that integrates language models with calendar data to support personalized scheduling, reflection, and schedule-aware response and suggestions. Agents reason over structured event timelines and assist users through a familiar calendar interface. In turn, users can schedule and steer agent behavior by prompting their calendar to organize scheduled activities. 
 
 ### Table of Contents
@@ -45,3 +47,42 @@ title: 'Introduction'
   - API keys and environment setup  
   - Running the Streamlit app  
   - Syncing your first memory trace  
+
+
+#### Core Concepts
+
+- **Memory Traces**
+
+Structured JSON records of events -- such as goals, meetings, reflections, and tasks -- used as the foundation for grounding model reasoning and informing calendar updates. 
+
+- **Calendar Integration**
+
+Memory traces are translated into `.ics` files, enabling full synchronization with tools like Google Calendar and Apple iCalendar. 
+
+- **Language Model Scheduling**
+
+Chronologue uses model APIs (ie. function calling) to interpret user prompts and generate structured actions -- adding, editing, deleting, summarizing, and filtering events. 
+
+- **Editable and Promptable Interface**
+
+Users can interact through a table-based UI, chat interface, or calendar interface to make memory data: 
+
+- **Editable** — Update, remove, or annotate memory traces (e.g., conversation history, scheduled events, reflections).
+    
+- **Promptable** — Ask questions or issue commands (e.g., “What did I work on last Friday?” or “What should I focus on this Friday?”), with responses grounded in past calendar data.
+
+- **Steerable Agents**  
+
+Chronologue enables agents that act on behalf of the user, grounded in structured memory and calendar context. The goal is to give users control over agentic behavior in time—such as scheduling deliveries, appointments, reminders, or focus blocks.
+
+Users maintain control through:
+
+- **Approval and editing** of any agent-generated event before it’s added to the calendar.
+    
+- **Review of all actions** in a familiar, transparent calendar interface.
+    
+- **Direct prompting** of agents to take specific actions (e.g., “Plan my next study session,” “Reschedule missed tasks from last week”).
+    
+- **Orchestration over time** by embedding memory, feedback, and scheduling preferences into the planning workflow.
+    
+Chronologue prioritizes autonomy: agents respond to user instruction — users define the time, place, and action. 
