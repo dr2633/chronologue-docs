@@ -1,0 +1,247 @@
+---
+title: 'Tempo Tokens'
+---
+
+
+
+Tempo tokens are time-grounded embeddings or annotations that represent temporal structure — explicitly encoding timing, recurrence, and duration into a model’s input at inference time.
+
+Think of them as positional encodings, but for real-world time—not just token order.
+
+**Time-Aware Transformers**  
+
+Transformers today use fixed or learned positional encodings that reflect the order of tokens during training. That works well for language, but it doesn’t capture semantic time—like the difference between _Monday 3PM_ and _Saturday 10AM_.  
+There’s currently no built-in way to represent:
+
+- Recurring events
+    
+- Temporal gaps or proximity
+    
+- Day-of-week or time-of-day patterns
+    
+- Future planning vs past reasoning
+    
+
+**Language Models Lack Clock and Calendar Awareness**  
+While LLMs can talk about time, they don’t _use_ time as part of their internal context.  They don’t know when something happened. They don’t model how long real-world events take. And they have no sense of what’s coming next unless it’s explicitly mentioned in a prompt.
+
+This limits their ability to plan, coordinate, or help users manage real-time tasks.  By grounding model inputs in structured time—especially using external sources like `.ics` calendar data—we can start to bridge this gap and build agents that better understand the temporal context their users inhabit.
+
+
+**Proposed Function of Tempo Tokens**
+
+At training or inference, tempo tokens can be inserted as special annotations that; 
+
+- Encode **absolute time**: @2025-04-30T14:00Z
+- Encode **relative time**: `@+3d`, `@past-1w`
+- Encode **calendar structure**: `@Monday`, `@weekend`, `@EoQ`
+- Encode **rhythmic recurrence**: `@biweekly`, `@every-Tuesday`
+
+These could be actual tokens (`<tempo:mon_14_00>`) or embedded features added via a side-channel (like extra inputs in fine-tuning or adapters).
+
+Enables user adaptability and specification for agent tasks 
+
+**Training-Time Augmentation**
+
+Use `.ics` or calendar data to:
+
+- Inject time-structured context into dialogue or task completion datasets.
+    
+- Align text spans with event timing and sequence (e.g., doctor notes, project logs).
+    
+- Generate training examples where **temporal cues improve performance** on downstream tasks (planning, scheduling, coordination, summarization).
+
+Example 
+
+Transform 
+```txt
+Submit payroll to HR next Tuesday May 13th. 
+```
+
+into: 
+
+```txt
+"Submit payroll to HR. <tempo:due-2025-05-01> <tempo:project-deadline>"
+```
+
+**Inference-Time Augmentation**
+
+At inference: 
+
+- Inject known temporal signals from `.ics` context into the prompt to improve grounding 
+
+- Align responses with upcoming events, time constraints, or temporal reasoning goals 
+
+- Enable planning agents to prioritize actions in realistic and user-defined time horizons
+
+**Use Cases with `.ics` Integration**
+
+**Chronologue Command Agent**
+
+- Converts `.ics` entries into tempo tokens for prompt construction
+- Use upcoming event timing to suggest actions, order and organize tasks, detect and manage conflicts in scheduling
+
+**Reasoning and CoT**
+
+- Tempo tokens give context to memory traces: when it happened, how often, what comes next 
+
+**Time-Aware Retrieval and Summarization**
+
+- "Summarize the last week's events" --> uses tempo-annotated memory traces to construct a coherent and verifiable narrative 
+
+***
+
+Feasibility: 
+
+- Can be done without architecture changes using adapter layers or embedding projection (to link events in chronological time) 
+- Using time as an index dimension 
+
+Logistically: 
+
+- `.ics` data is structured and timestamped, making it the ideal import format for tempo token generation -- assembling largescale datasets and synthetic datasets
+- Many existing datasets (project logs, Github commits, emails) could be aligned with time 
+
+
+
+***
+
+
+Showcasing how an `.ics` calendar event can be parsed into tempo tokens -- these tokens can be retrieved to augment inference-time system-level prompts for temporally grounded chain-of-thought (CoT) reasoning. 
+
+1. Sample `.ics` Event 
+
+```ics
+BEGIN:VEVENT
+UID:shipment-arrival-20250430T150000Z@chronologue.ai
+DTSTAMP:20250429T120000Z
+DTSTART:2025-04-30T15:00:00Z
+DTEND:2025-04-30T15:30:00Z
+SUMMARY:Inbound Shipment — Med Supplies (Batch #23B)
+LOCATION:Receiving Dock 3
+DESCRIPTION:Urgent delivery. Requires cold chain transfer to Storage A by 16:00.
+END:VEVENT
+```
+
+2. Structured Event JSON 
+
+```json
+{
+  "uid": "shipment-arrival-20250430T150000Z@logistics.ai",
+  "title": "Inbound Shipment — Med Supplies (Batch #23B)",
+  "start": "2025-04-30T15:00:00Z",
+  "end": "2025-04-30T15:30:00Z",
+  "location": "Receiving Dock 3",
+  "description": "Urgent delivery. Requires cold chain transfer to Storage A by 16:00."
+}
+```
+
+3. Tempo Tokens for Inference Context 
+
+
+```txt
+<tempo:2025-04-30T15:00Z>
+<tempo:Wednesday>
+<tempo:Afternoon>
+<tempo:shipment>
+<tempo:urgent>
+<tempo:deadline-2025-04-30T16:00Z>
+<tempo:location-ReceivingDock3>
+<tempo:handoff-required>
+```
+
+
+These tokens give the agent:
+
+- Exact time of arrival
+    
+- Deadline for transfer
+    
+- Event type (`shipment`)
+    
+- Urgency and task completion constraints
+    
+- Location grounding
+
+4. Injected CoT Prompt for Temporal Reasoning 
+
+Prompt: 
+
+```
+You are coordinating logistics for medical shipments. Use the schedule below to assign responsibilities and detect any conflicts or risks.
+```
+
+System Prompt 
+
+```txt
+Upcoming Event:
+Inbound Shipment — Med Supplies (Batch #23B)
+<tempo:2025-04-30T15:00Z> <tempo:Wednesday> <tempo:Afternoon>
+<tempo:urgent> <tempo:deadline-2025-04-30T16:00Z> <tempo:handoff-required>
+<tempo:location-ReceivingDock3>
+
+Current cold chain staff availability:
+- Luis (shift ends at 15:15)
+- Priya (available 14:00–18:00)
+- Forklift 1 in use until 14:55
+
+Recent delivery delays: 12–18 min average at Receiving Dock 3
+```
+
+
+Simulated Chain-of-Thought Output 
+```
+The shipment is scheduled for 15:00 with a cold chain deadline at 16:00. Luis’s shift ends too early to ensure delivery, so Priya should be assigned. There’s a risk of a 12–18 minute delay at Receiving Dock 3, which means backup cold chain gear should be pre-cooled in Storage A. Forklift 1 will be available in time for transfer. Assign Priya and notify Receiving Dock to prioritize unloading.
+```
+
+### **Inference Benefits**
+
+Tempo tokens allow the model to:
+
+- Predictively allocate resources based on event timing
+    
+- Reason about deadlines, urgency, and gaps
+    
+- Align agents (human or AI) with scheduled activity
+    
+- Anticipate failure modes (e.g., delays, shift coverage, equipment availability)
+
+
+
+
+Required Fields 
+
+| **Category**    | **Token Format**                            | **Examples**                          | **Purpose**                                  |
+| --------------- | ------------------------------------------- | ------------------------------------- | -------------------------------------------- |
+| `datetime`      | `<tempo:YYYY-MM-DDTHH:MMZ>`                 | `<tempo:2025-04-30T15:00Z>`           | Absolute event anchor                        |
+| `weekday`       | `<tempo:weekday>`                           | `<tempo:Monday>`                      | Weekly structure awareness                   |
+| `timeofday`     | `<tempo:timeofday>`                         | `<tempo:Morning>`, `<tempo:Evening>`  | Task alignment and load distribution         |
+| `duration`      | `<tempo:duration-Xmin>`                     | `<tempo:duration-45min>`              | Task commitment estimation                   |
+| `deadline`      | `<tempo:deadline-YYYY-MM-DDTHH:MMZ>`        | `<tempo:deadline-2025-04-30T16:00Z>`  | Time-critical planning                       |
+| `recurrence`    | `<tempo:recurring-pattern>`                 | `<tempo:recurring-weekly>`            | Rhythmic events, repeated action logic       |
+| `urgency`       | `<tempo:urgent>` / `<tempo:low-priority>`   | `<tempo:urgent>`                      | Task prioritization                          |
+| `event-type`    | `<tempo:meeting>`, `<tempo:shipment>`       | `<tempo:handoff-required>`            | Agent routing and classification             |
+| `location`      | `<tempo:location-ID>`                       | `<tempo:location-Lab3>`               | Coordination and resource allocation         |
+| `now`           | `<tempo:now-YYYY-MM-DDTHH:MMZ>`             | `<tempo:now-2025-04-30T14:58Z>`       | Relative timing reference                    |
+| `relative-time` | `<tempo:in-X>` / `<tempo:past-X>`           | `<tempo:in-2h>` / `<tempo:past-1d>`   | Temporal comparison and windowing            |
+| `status`        | `<tempo:complete>` / `<tempo:blocked>`      | `<tempo:in-progress>`                 | Process and planning state                   |
+| `availability`  | `<tempo:available>` / `<tempo:unavailable>` | `<tempo:available>`                   | Temporal resource constraints                |
+| `conflict`      | `<tempo:collision-YYYY-MM-DDTHH:MMZ>`       | `<tempo:collision-2025-04-30T15:00Z>` | Conflict detection                           |
+| `soft-boundary` | `<tempo:preferred>` / `<tempo:flexible>`    | `<tempo:preferred-morning>`           | Non-hard constraints for collaborative plans |
+
+Optional Fields 
+
+|**Category**|**Token Format**|**Examples**|
+|---|---|---|
+|`window`|`<tempo:window-start-end>`|`<tempo:window-14:00-16:00>`|
+|`phase`|`<tempo:phase-X>`|`<tempo:phase-2-of-4>`|
+|`task-linkage`|`<tempo:after-task-A>` / `<tempo:before-B>`|`<tempo:after-sample-collection>`|
+|`reschedule`|`<tempo:reschedule-request>`||
+|`handoff`|`<tempo:handoff-required>` / `<tempo:handoff-complete>`||
+|`buffer-time`|`<tempo:buffer-10min>`||
+|`shift`|`<tempo:shift-morning>` / `<tempo:shift-2>`||
+|`type`|`<tempo:type-inspection>` / `<tempo:type-training>`||
+|`milestone`|`<tempo:milestone>`|`<tempo:milestone-week-4>`|
+|`recency`|`<tempo:last-occurred-YYYY-MM-DD>`|`<tempo:last-occurred-2025-04-15>`|
+|`delay-risk`|`<tempo:slip-risk>`||
+|`reminder`|`<tempo:remind-10min-before>`||
+
