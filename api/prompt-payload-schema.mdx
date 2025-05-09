@@ -1,0 +1,181 @@
+---
+title: "Prompt Payload Schema"
+---
+
+# Prompt Payload Schema
+
+Chronologue's prompt payload defines the contract between the user-facing interface (e.g. chat or scheduling UI) and the backend agent system. This schema ensures language model prompts are **structured**, **time-aware**, and **memory-grounded**.
+
+---
+
+## Table of Contents
+
+1. Overview  
+2. Top-Level Schema  
+3. Context Object  
+    - Memory Traces  
+    - Calendar Events  
+    - Tempo Tokens  
+    - User Profile  
+4. Traceability and Debugging  
+5. Versioning and Extensibility  
+6. Example Payloads  
+
+---
+
+## Overview
+
+Chronologue prompts are JSON requests passed to the LLM planner via the `/chat/respond` endpoint. The agent uses this payload to parse user intent, retrieve relevant memory, and return structured actions (e.g. `add_event`, `reflect`, `reschedule_event`).
+
+---
+
+## Top-Level Schema
+
+{
+  "prompt": "Schedule a deep work block tomorrow from 9 to 11am",
+  "timestamp": "2025-05-09T08:35:00Z",
+  "timezone": "America/Los_Angeles",
+  "context": {
+    "memory": [...],
+    "calendar": [...],
+    "tempo_tokens": [...],
+    "user_profile": { ... }
+  },
+  "trace_id": "req-8765",
+  "debug": true
+}
+
+| Field        | Type        | Required | Description |
+|--------------|-------------|----------|-------------|
+| prompt       | string      | ✅        | Natural language input from the user |
+| timestamp    | string      | ✅        | ISO 8601 format; used for grounding time expressions |
+| timezone     | string      | ✅        | IANA timezone name (e.g., America/Los_Angeles) |
+| context      | object      | ✅        | Memory, calendar, tempo tokens, and user profile |
+| trace_id     | string      | ❌        | Optional trace or request ID for debugging |
+| debug        | boolean     | ❌        | Enables verbose logs or LLM commentary |
+
+---
+
+## Context Object
+
+The `context` object is where Chronologue provides structured memory, retrieved events, and serialized time information to ground the prompt.
+
+### Memory Traces
+
+```json
+{
+  "type": "reflection",
+  "uid": "trace-123",
+  "content": "I need to set aside more time for deep work",
+  "timestamp": "2025-05-06T22:30:00Z"
+}
+```
+
+### Calendar Events
+
+
+```json 
+{
+  "uid": "evt-456",
+  "title": "Morning Standup",
+  "start": "2025-05-09T09:00:00Z",
+  "end": "2025-05-09T09:30:00Z"
+}
+```
+
+### Tempo Tokens
+
+```
+[
+  "<tempo:2025-05-10T09:00Z>",
+  "<tempo:MondayMorning>"
+]
+```
+
+### User Profile
+
+```json
+{
+  "preferred_blocks": ["09:00-11:00", "14:00-16:00"],
+  "meeting_buffer": 15,
+  "sleep_range": ["23:00", "07:00"]
+}
+```
+
+---
+
+## Traceability and Debugging
+
+### trace_id  
+Use a UUID or timestamp-based identifier to log, trace, or replay a given prompt. This helps in:
+- Auditing model behavior  
+- Linking prompt → response → state update chains  
+- Debugging memory relevance or tool usage  
+
+### debug  
+Set to true to enable LLM commentary or verbose internal state tracking (e.g., why a certain event was scheduled).
+
+---
+
+## Versioning and Extensibility
+
+Design principles:
+- Backward compatible: Unknown fields are ignored by default.
+- Composable context: memory, calendar, and user_profile can be generated or injected separately.
+- Typed schemas: Use pydantic for validation and auto-generated OpenAPI docs.
+
+---
+
+## Example Payloads
+
+### Basic Prompt
+
+```
+{
+  "prompt": "Block focus time tomorrow morning",
+  "timestamp": "2025-05-09T08:35:00Z",
+  "timezone": "America/Los_Angeles",
+  "context": {
+    "memory": [],
+    "calendar": [],
+    "tempo_tokens": []
+  }
+}
+```
+
+### Full Scheduling Payload
+
+```json
+{
+  "prompt": "Schedule a deep work block tomorrow from 9 to 11am",
+  "timestamp": "2025-05-09T08:35:00Z",
+  "timezone": "America/Los_Angeles",
+  "context": {
+    "memory": [
+      {
+        "type": "reflection",
+        "uid": "trace-123",
+        "content": "I need to set aside more time for deep work",
+        "timestamp": "2025-05-06T22:30:00Z"
+      }
+    ],
+    "calendar": [
+      {
+        "uid": "evt-456",
+        "title": "Morning Standup",
+        "start": "2025-05-09T09:00:00Z",
+        "end": "2025-05-09T09:30:00Z"
+      }
+    ],
+    "tempo_tokens": [
+      "<tempo:2025-05-10T09:00Z>"
+    ],
+    "user_profile": {
+      "preferred_blocks": ["09:00-11:00", "14:00-16:00"],
+      "meeting_buffer": 15
+    }
+  },
+  "trace_id": "req-8765",
+  "debug": true
+}
+```
