@@ -1,0 +1,136 @@
+---
+title: "Agent Orchestration Interface"
+group: "Concepts"
+---
+
+# Agent Orchestration Interface
+
+Chronologue treats time not just as a resource to manage, but as a surface for managing and coordinating actions. The agent orchestration interface is designed to help users **audit, steer, and schedule agent behavior** directly through the calendar. This system makes agent actions **auditable**, **controllable**, and **programmable**, giving users an interface to assign responsibility to agents in the same way one might call a ride, schedule a delivery, or block time with a collaborator.
+
+Unlike passive logging or simple model output, Chronologue anchors agent actions in time with explicit control over **when** and **how long** the action should take. This introduces precision into task specification and empowers users to compose systems of intent with temporal constraints.
+
+Chronologue reimagines the calendar as a **control surface** for agentic workflows. As language models gain more general capabilities, there is an expanding need for interfaces that make model behaviors **legible, modifiable, and schedulable**. Chronologue is built to meet that need.
+
+---
+
+## 1. System Roles and Components
+
+- **User**: Initiates prompts, reviews or edits agent-generated plans, and gives feedback.
+- **Agent**: Generates structured plans (e.g., `add_event`, `reflect`, `reschedule_event`) using model outputs.
+- **Planner Queue**: Holds proposed agent actions awaiting user confirmation.
+- **Executor**: Commits approved plans into persistent memory and/or calendar.
+- **Trace Log**: Immutable record of both agent proposals and user decisions.
+
+In the future, everyone will be a builder and manager. Access to tools and information will be ubiquitous—but not all interfaces will offer the same leverage. Agent orchestration is how we build utility at human scale.
+
+---
+
+## 2. Agent Action Lifecycle
+
+Every agent action flows through a defined lifecycle to support transparency, modification, and feedback:
+
+- **proposal**: Agent generates an initial plan, often via function calling from an LLM.
+- **review**: Plan is displayed to the user for inspection or editing.
+- **approval**: User confirms the plan or modifies it to fit their intent.
+- **execution**: Approved plan is committed to memory and/or calendar.
+- **feedback**: Optional user input (rating, revision, comment) is logged to guide future behavior.
+
+### Status Transitions
+
+- `proposed` → `approved` → `executed`
+- `proposed` → `rejected`
+- `executed` → `edited`
+
+Each transition is recorded as a memory trace, preserving full behavioral provenance.
+
+---
+
+## 3. Trace Structure for Orchestration
+
+Agent behavior is recorded and governed via structured memory traces. A special type of trace, `agent_plan`, extends the general schema with orchestration-specific fields.
+
+### Required Fields
+
+| Field           | Type     | Description |
+|------------------|----------|-------------|
+| `action_type`    | string   | One of: schedule, reflect, reschedule, log |
+| `status`         | string   | One of: proposed, approved, rejected, executed |
+| `origin`         | string   | One of: agent, user |
+| `scheduled_for`  | string   | Optional ISO timestamp representing intended execution time |
+| `uid`            | string   | Unique identifier for trace reference |
+
+### Trace Linking
+
+- `agent_plan` traces may link to `calendar_event` or `reflection` traces that result from their execution.
+- Use fields like `linked_event_uid` or `child_trace_ids` to maintain referential integrity.
+
+---
+
+## 4. Orchestration UI Patterns
+
+Chronologue includes several interface modules to manage agent behavior interactively:
+
+- **Daily Agent Preview**: Shows all pending proposed actions, with accept/reject controls.
+- **Command Log**: Timeline of all agent outputs and user decisions, chronologically sorted.
+- **Editable Plan Workspace**: UI that allows drag-and-drop reordering, rescheduling, or editing of proposed actions.
+- **Feedback Modal**: Allows users to rate or comment on specific agent behaviors, improving downstream suggestions.
+
+These patterns ensure agents are observable and influenceable—core requirements for high-trust collaboration.
+
+---
+
+## 5. Feedback Loop, Behavior Adaptation, RL, Federated Learning
+
+The orchestration system supports structured feedback and adaptation.
+
+- `feedback_rating` and `notes` can be applied to any trace.
+- Feedback can be linked to the `agent_plan` UID to trace behavioral outcomes.
+- Longitudinal analysis of approved/rejected traces can drive:
+  - Reward modeling
+  - Reinforcement learning (e.g., via success/failure tags)
+  - Federated updates to personalized planning models
+
+Feedback is not ephemeral—it's written to memory for reuse.
+
+---
+
+## 6. Scheduling and User Customization
+
+User constraints are enforced and communicated to agents through scheduling metadata:
+
+- **Time as a constraint interface**: Only allow agents to propose actions during unblocked slots.
+- **User-defined cadence**: Set rules for how often agents can propose certain actions (e.g., 1 reflection per day).
+- **Discrete allocation**: Agents may be limited to a budget of actions per day or week, modifiable by the user.
+- **Prompt context injection**: Availability and user preferences are embedded in model inputs.
+
+---
+
+## 7. Implementation Notes
+
+Chronologue uses the following system architecture for orchestration:
+
+### FastAPI Endpoints
+
+- `POST /agent/plan` — submit an agent proposal
+- `GET /agent/queue` — retrieve pending plans
+- `POST /agent/approve` — approve a specific plan
+- `POST /agent/reject` — reject a specific plan
+- `POST /agent/feedback` — log feedback to a specific trace
+
+### Frontend Sync
+
+- Use WebSockets or polling to synchronize planner queue and user approvals in real time.
+
+### System Separation
+
+Modular separation is recommended:
+
+- **Memory Trace Store**: All long-term memory and behavior logs
+- **Calendar Event Store**: Ground-truth schedule and event registry
+- **Agent Queue Store**: Temporary buffer for proposals pending execution
+
+This separation enables caching, rollback, and traceability of agent behavior at different lifecycle stages.
+
+---
+
+Chronologue is more than a personal assistant — it’s an operating system for managing agents across time. The orchestration interface allows users not only to see what their agent is doing, but to **shape its behavior** over time with precision and trust.
