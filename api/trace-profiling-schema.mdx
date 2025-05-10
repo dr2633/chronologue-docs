@@ -1,0 +1,177 @@
+---
+title: "Trace Profiling Schema"
+group: "API"
+---
+
+# Trace Profiling Schema
+
+Chronologue uses profiling metadata to measure, evaluate, and improve agent behavior over time. Inspired by structured execution profiling in systems like CUDA, this schema enables precise tracking of when agent actions are executed, how well they align with planned time, and how users respond to those actions.
+
+Profiling is essential not just for optimization, but for **trust**, **tuning**, and **feedback-driven refinement** in agent orchestration.
+
+---
+
+## 1. Introduction
+
+- Profiling provides runtime visibility into when and how agent actions execute.
+- Like CUDA's CUPTI or Nsight systems, Chronologue needs traceable metrics to optimize across time, tasks, and feedback loops.
+- This schema standardizes profiling for all trace types that involve execution (e.g., `agent_plan`, `calendar_event`, `reflection`).
+
+---
+
+## 2. Profiling Objectives
+
+- **Measure timing accuracy**: Compare `scheduled_for` and `executed_at`
+- **Track duration**: Time taken from start to completion
+- **Detect temporal misalignment**: With respect to tempo tokens
+- **Support user feedback integration**: Ratings or comments
+- **Enable time-sensitive reward modeling**: Penalize misaligned or delayed behavior; reward timely, helpful execution
+
+---
+
+## 3. Core Profiling Fields
+
+| Field             | Type     | Description |
+|-------------------|----------|-------------|
+| `executed_at`     | string   | Timestamp when agent action was completed |
+| `duration_ms`     | number   | Total time (ms) taken from start to finish |
+| `deviation_ms`    | number   | Time delta (ms) between scheduled and actual execution |
+| `tempo_token`     | string   | Optional scheduling token (e.g., `<tempo:EveningReview>`) |
+| `tempo_alignment` | string   | Enum: `exact`, `partial`, `misaligned` |
+| `feedback_score`  | number   | User rating (1–5) after execution |
+
+---
+
+## 4. Extending the Memory Trace Schema
+
+Profiling metadata should be embedded as an optional nested field within a trace:
+
+Example:
+
+```json 
+{
+  "uid": "agent-plan-789",
+  "type": "agent_plan",
+  "scheduled_for": "2025-05-11T20:00:00Z",
+  "content": "Reflect on the day",
+  "profiling": {
+    "executed_at": "2025-05-11T20:03:12Z",
+    "duration_ms": 182000,
+    "deviation_ms": 192000,
+    "tempo_token": "<tempo:EveningReview>",
+    "tempo_alignment": "partial",
+    "feedback_score": 4
+  }
+}
+```
+
+### Supported Trace Types
+
+- `agent_plan`
+- `calendar_event`
+- `reflection`
+
+### When to Populate
+
+- Upon successful execution of the agent action
+- Updated by the executor or background profiler
+- Optionally amended by feedback pipeline or user review
+
+---
+
+## 5. Tempo Token Alignment Evaluation
+
+Tempo tokens allow agents to align behavior with human-intuitive time blocks (e.g., `<tempo:SundayEvening>`). Profiling compares execution time with the token's semantic window.
+
+### Evaluation Criteria
+
+- **Exact**: Within ±15 minutes of token-aligned time
+- **Partial**: Within ±90 minutes but outside ideal window
+- **Misaligned**: More than 90 minutes off or entirely outside scope
+
+### Use Cases
+
+- Adjust behavior models based on token compliance
+- Detect patterns of drift or delay in execution
+
+---
+
+## 6. Feedback and Reward Integration
+
+### Feedback Score
+
+- Captured via UI (`FeedbackModal`) or post-hoc prompt
+- Used to guide future agent planning or modify templates
+
+### Reward Signal
+
+Optional field:
+
+- `reward_signal`: number (float)
+- May be derived from:
+  - Feedback
+  - Time alignment
+  - Action value (e.g., user engagement)
+
+This enables training data for RLHF-style fine-tuning or local heuristics.
+
+---
+
+## 7. Implementation Considerations
+
+- Profiling should be injected by the **executor** once the task is complete.
+- Use FastAPI middleware or background tasks to enrich traces after delay-sensitive operations.
+- Maintain compatibility by versioning the profiling schema (e.g., `profiling.v1`).
+- Support fallback for traces with no temporal execution (e.g., static memory additions).
+
+---
+
+## 8. Example Profiling Payloads
+
+### Successful Execution (Exact Alignment)
+
+
+```json
+{
+  "executed_at": "2025-05-09T19:00:12Z",
+  "duration_ms": 180000,
+  "deviation_ms": 12,
+  "tempo_token": "<tempo:EveningReview>",
+  "tempo_alignment": "exact",
+  "feedback_score": 5
+}
+```
+
+---
+
+### Misaligned Reflection with Feedback
+
+```json
+{
+  "executed_at": "2025-05-09T23:40:00Z",
+  "duration_ms": 145000,
+  "deviation_ms": 168000,
+  "tempo_token": "<tempo:EveningReview>",
+  "tempo_alignment": "misaligned",
+  "feedback_score": 2
+}
+```
+
+---
+
+### Failed Execution (e.g., dropped or rejected plan)
+
+```json
+{
+  "executed_at": null,
+  "duration_ms": 0,
+  "deviation_ms": null,
+  "tempo_token": "<tempo:MorningPlanning>",
+  "tempo_alignment": "misaligned",
+  "feedback_score": 1
+}
+```
+
+---
+
+This profiling schema allows Chronologue to evaluate and adapt agent behavior across time, context, and user expectations—unlocking trust, performance, and real-time optimization.

@@ -1,0 +1,104 @@
+---
+title: "Temporal Agent Runtime and Profiling"
+group: "Architecture"
+---
+
+# Temporal Agent Runtime and Profiling
+
+Chronologue is designed as a **temporal compiler for agent behavior**. Inspired by CUDA’s host-device execution model and profiling tools, the system enables users to write structured, time-aware plans, orchestrate agent actions, and evaluate performance over time through memory traces and structured feedback.
+
+This architecture turns the calendar into a runtime coordination surface, where users don’t just schedule tasks—they program agents.
+
+---
+
+## 1. The Host-Device Model for Agents
+
+Chronologue follows a model similar to CUDA’s host-device abstraction:
+
+- **Host**: The user (or LLM planner) orchestrates work by defining agent plans and temporal intent.
+- **Device**: The agent executes structured tasks like scheduling events, writing reflections, or logging activities.
+- **Queue**: Proposed actions wait in the planner queue until approved and scheduled for execution.
+- **Profiler**: Logs traceable performance and alignment data to support adaptive behavior.
+
+### Mapping Concepts
+
+| Chronologue Role | CUDA Analogy | Description |
+|------------------|--------------|-------------|
+| `agent_plan`     | Kernel Launch | Encapsulates a task and when to execute it |
+| `executor`       | GPU threads   | Performs the action according to plan |
+| `tempo_token`    | Stream config | Temporal granularity and alignment metadata |
+| `profiling`      | Nsight/CUPTI  | Logs execution time, accuracy, and feedback |
+
+---
+
+## 2. Compiler + Runtime Pipeline
+
+Chronologue functions like a temporal DSL + execution system:
+
+- **Plan**: User or agent defines action (`agent_plan`) with scheduling metadata
+- **Schedule**: The system resolves `tempo_token`, checks constraints, and queues execution
+- **Execute**: An executor runs the agent behavior and commits resulting memory traces
+- **Profile**: Execution is logged with metadata like `executed_at`, `deviation_ms`, and `feedback_score`
+
+This system enables composable planning, reliable delegation, and feedback-driven improvement of agent performance over time.
+
+---
+
+## 3. Agent Execution and Trace Profiling
+
+After each agent action is executed, the system records **profiling metadata** to support:
+
+- **Auditing**: What happened, when, and how closely did it match the plan?
+- **Learning**: Was the result helpful? Did the user approve or revise?
+- **Scheduling feedback**: Was the execution on time, early, or delayed?
+
+Profiling metadata may include:
+
+- `executed_at`: timestamp of actual execution
+- `tempo_alignment`: comparison against intended token
+- `feedback_score`: user rating
+- `duration_ms`, `deviation_ms`
+
+For a full field-by-field specification and implementation guide, see the [Trace Profiling Schema](./trace_profiling_schema).
+
+---
+
+## 4. Repository Organization for DSL + Runtime
+
+To build and maintain this architecture, organize the Chronologue repo as follows:
+
+```
+chronologue/  
+├── schemas/  
+│ ├── agent_plan.py  
+│ ├── feedback_trace.py  
+│ └── profiling.py  
+├── runtime/  
+│ ├── scheduler.py  
+│ ├── executor.py  
+│ ├── profiler.py  
+│ └── queue.py  
+├── tempo/  
+│ └── tokens.py  
+├── api/  
+│ ├── routes_agent.py  
+│ └── routes_feedback.py  
+├── frontend/  
+│ ├── components/AgentQueuePanel.tsx  
+│ ├── components/FeedbackModal.tsx  
+│ └── components/ProfilerTimeline.tsx
+```
+
+This separation cleanly supports DSL definition, plan scheduling, runtime execution, and result introspection.
+
+---
+
+## 5. Summary
+
+Chronologue is not just a scheduler—it is a **temporal programming interface for agents**. By modeling the orchestration of behavior over time, it provides:
+
+- Programmability: composable intent with runtime guarantees
+- Auditability: every agent action is logged and reviewable
+- Adaptivity: agent plans evolve based on profiling and feedback
+
+For runtime to be trustworthy, it must be traceable. The combination of memory traces and execution profiling is what enables scalable, safe agent behavior over time.
