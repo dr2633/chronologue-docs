@@ -1,0 +1,138 @@
+---
+title: "Memory Tagging and Context Control"
+group: "Concepts"
+---
+
+# Memory Tagging and Context Control
+
+Memory tagging in Chronologue allows users and agents to organize, retrieve, and share meaningful subsets of memory traces. Tags act as **lightweight semantic labels**—designed to give users **control**, agents **precision**, and teams a **shared language for context**.
+
+This document walks through the design motivations for tagging, the tension between structured control and intelligent retrieval, and the practical advantages of using tags for planning, reflection, and agent collaboration.
+
+---
+
+## 1. Why Tagging Matters
+
+While language models can infer patterns from raw memory traces, Chronologue supports tagging for two core reasons:
+
+### a. **Control Interface**
+
+Tags let users shape the context used in agent tasks. For example:
+
+- Summarize my goals from `#q2_review`
+- Schedule around `#deep_work` blocks
+- Reflect only on `#travel` memories this weekend
+
+This is more than filtering—it’s a **way to think with memory**, not just about it.
+
+### b. **Communication Interface**
+
+Tags create a common vocabulary between users, agents, and collaborators. This enables:
+
+- Sharing a memory cluster (`#team_sync`) with a new agent
+- Broadcasting `#customer_feedback` traces to a product team
+- Subscribing an agent to `#urgent_tasks` for autonomous triage
+
+---
+
+## 2. Schema Overview
+
+Every memory trace in Chronologue can include an array of tags:
+
+tags: ["deep_work", "2025Q2", "team_sync", "urgent"]
+
+These tags are:
+
+- Plain strings
+- User- or agent-defined
+- Stored alongside trace metadata
+
+---
+
+## 3. Use Cases
+
+### a. Personal Context Scoping
+
+User prompt:
+
+"Can you generate a personal retrospective based on my #weekly_reflection and #fitness logs from April?"
+
+System behavior:
+
+- Fetches all memory traces with `tags` containing both `weekly_reflection` and `fitness`
+- Limits by `timestamp` from `2025-04-01` to `2025-04-30`
+- Passes to LLM as structured context block
+
+### b. Multi-Agent Collaboration
+
+- A user tags a batch of customer support transcripts with `#feature_request`
+- Shares this tag cluster with a product roadmap agent and an investor report agent
+- Each agent retrieves the same core memory, but interprets it for different planning tasks
+
+### c. Cross-User Shared Memory
+
+In a team workspace:
+
+- A lead tags a set of traces with `#onboarding_guides`
+- New team members can access this tag’s contents for reference
+- An onboarding agent uses only `#onboarding_guides` to generate customized start plans
+
+---
+
+## 4. Prompt-Aware Tag Filters
+
+Chronologue supports `#hashtags` in chat prompts:
+
+Prompt:
+
+"Summarize everything in #deep_work and #2025Q1 related to travel planning."
+
+System:
+
+- Parses `#deep_work` and `#2025Q1` as tag filters
+- Retrieves intersected trace cluster
+- Conditionally scopes memory for planning or reflection agents
+
+This pattern allows users to **dynamically reframe memory context** with a single prompt.
+
+---
+
+## 5. Design Tension: Intelligence vs. Explicit Control
+
+### Argument Against Tagging
+
+- Modern LLMs can infer themes without tags
+- Embeddings can cluster memories without manual labeling
+- Tags require upkeep and structure
+
+### Why Chronologue Still Embraces Tagging
+
+- Tags allow **repeatable, editable, and inspectable** context control
+- They enable **human-to-agent communication of memory intent**
+- Tags support **parallel views** of the same memory (e.g., `#urgent`, `#revisit`, `#weekly`)
+
+Tagging is not about redundancy—it’s about empowering users to **decide what matters and when**.
+
+---
+
+## 6. Best Practices
+
+- Use simple, memorable tags: `#weekly`, `#team_sync`, `#urgent`
+- Combine temporal and semantic tags: `#may`, `#q2_review`, `#travel`
+- Let agents suggest tags during or after execution (e.g., “Would you like to tag this #deep_work?”)
+- Regularly audit and summarize high-frequency tag clusters
+
+---
+
+## 7. Future Directions
+
+- Tag versioning and namespaces for shared workspaces
+- Auto-generated tags based on NLP themes and calendar context
+- Agent-driven tag propagation and conditional triggers (e.g., if tagged `#urgent`, notify)
+- Visual tag-based context composer for multi-agent systems
+
+---
+
+Memory tagging in Chronologue is more than an organizational tool. It is a **semantic scaffold for agency**—a way to program memory, personalize behavior, and collaborate through context.
+
+Use tags not only to remember the past, but to guide what comes next.
