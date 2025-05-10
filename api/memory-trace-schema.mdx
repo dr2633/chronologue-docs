@@ -1,0 +1,143 @@
+---
+title: "Memory Trace Schema"
+group: "API"
+---
+
+# Memory Trace Schema
+
+Chronologue uses memory traces to represent structured information over time. These include user goals, reflections, system observations, and scheduled calendar events. Each trace is JSON-formatted and stored in a persistent memory store to support personalized planning, reflection, and agent reasoning.
+
+---
+
+## Memory Trace Types
+
+Traces are typed objects with a shared core schema. The primary `type` values include:
+
+### goal
+Represents a user-defined intention or objective.  
+- Example: "Finish CUDA tutorial this week"
+
+### reflection
+A personal insight or retrospective evaluation.  
+- Example: "Morning exercise made my focus better today"
+
+### observation
+A system- or user-logged factual statement about activity or state.  
+- Example: "Worked on writing sprint from 9:00 to 10:30"
+
+### calendar_event
+A scheduled or logged event that maps to an external calendar entry.  
+- Example: "Meeting with research team at 3pm"
+
+---
+
+## Required and Optional Fields
+
+Each trace includes the following fields:
+
+| Field              | Type     | Required | Description |
+|--------------------|----------|----------|-------------|
+| uid                | string   | yes      | Unique identifier for the trace |
+| type               | string   | yes      | One of: goal, reflection, observation, calendar_event |
+| timestamp          | string   | yes      | ISO 8601 timestamp marking creation |
+| content            | string   | yes      | Main text of the trace |
+| task_id            | string   | no       | Optional grouping ID for multi-step tasks |
+| theme              | string   | no       | Optional activity domain (e.g., fitness, learning, work) |
+| action_type        | string   | no       | Specifies agent/system action: schedule, reflect, log, update, delete |
+| importance         | number   | no       | Relative significance (0–1 float) |
+| completion_status  | string   | no       | One of: pending, completed, skipped |
+| linked_event_uid   | string   | no       | UID of associated calendar event (if applicable) |
+| collaborators      | array    | no       | List of user IDs or names involved |
+| feedback_rating    | number   | no       | User feedback score (1–5) |
+| notes              | string   | no       | Freeform comments or review notes |
+
+---
+
+## Trace Lifecycle
+
+### Creation
+Traces are created:
+- Automatically by LLMs after actions (e.g., scheduling a new event)
+- Manually via user reflection or logging
+
+Traces should always include a valid UID and timestamp at creation.
+
+### Update
+Fields like `completion_status`, `importance`, or `notes` can be updated over time as the task evolves or is reviewed.
+
+### Archival
+Traces may be archived (or soft-deleted) for filtering long-term memory. You may optionally add an `archived_at` timestamp.
+
+---
+
+## Linking Traces
+
+### Event UID Linking
+Traces of type `goal` or `reflection` can reference a `calendar_event` using the `linked_event_uid`. This enables synchronization between memory and scheduling contexts.
+
+### Feedback Annotations
+Users can provide feedback after a task:
+- Was this time block helpful?
+- Was this goal realistic?
+
+This can be stored using `feedback_rating` or added to the `notes` field.
+
+---
+
+## Agent Action Metadata
+
+To support filtering for model actions over time, use the optional `action_type` field. This helps distinguish between user-entered and model-generated traces and provides clarity in audits, learning loops, and structured logs.
+
+### Common values for `action_type`
+
+| Value       | Description                                 |
+|-------------|---------------------------------------------|
+| schedule    | Agent added a new event to the calendar     |
+| reschedule  | Agent moved an existing event               |
+| reflect     | Agent generated a new reflection            |
+| log         | System recorded a factual observation       |
+| update      | Agent edited an existing trace              |
+| delete      | Agent or user removed a trace or event      |
+
+This enables querying: "What did the agent *do* today?" or "Which reflections were AI-generated?"
+
+---
+
+## Example Trace Payloads
+
+### Reflection
+
+{
+  "uid": "trace-001",
+  "type": "reflection",
+  "timestamp": "2025-05-08T22:30:00Z",
+  "content": "Evening planning helped me sleep easier.",
+  "importance": 0.8,
+  "action_type": "reflect"
+}
+
+### Calendar Event
+
+{
+  "uid": "evt-045",
+  "type": "calendar_event",
+  "timestamp": "2025-05-09T07:00:00Z",
+  "content": "Upper body workout at Mission Cliffs",
+  "linked_event_uid": "gcal-789abc",
+  "completion_status": "completed",
+  "theme": "fitness",
+  "action_type": "schedule"
+}
+
+---
+
+## Best Practices
+
+- Use consistent formatting for timestamps (always UTC)
+- Ensure `uid` is globally unique (e.g., UUIDv4 or prefixed)
+- Link related traces by `linked_event_uid` or shared `task_id`
+- Use `importance` and `completion_status` to guide agent decisions
+- Use `action_type` to capture structured logs of agent reasoning and behavior
+- Avoid overloading `content` – structure your data where possible
+
+---
