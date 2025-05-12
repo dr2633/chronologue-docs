@@ -29,9 +29,9 @@
               "concepts/import-calendar",
               "concepts/event-embeddings",
               "concepts/tempo-tokens",
-              "concepts/agent-orchestration-interface", 
               "concepts/duration-estimation",
               "concepts/memory-tagging",
+              "concepts/agent-orchestration-interface" 
             ]
           },
          
