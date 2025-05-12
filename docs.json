@@ -35,9 +35,9 @@
             "group": "Integrations",
             "icon": "clock",
             "pages": [
-              "concepts/mcp-integration",
               "concepts/google-calendar",
-              "concepts/icalendar"
+              "concepts/icalendar",
+              "concepts/mcp-integration"
             ]
           },
 
@@ -55,11 +55,7 @@
             "group": "Examples",
             "icon": "list-check",
             "pages": [
-              "examples/conversation-history",
-              "examples/sports-scheduling",
-              "examples/live-events",
-              "examples/restaurant-reservations",
-              "examples/grocery-scheduling"
+              "examples/conversation-history"
             ]
           }
         ]
