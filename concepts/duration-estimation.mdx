@@ -5,10 +5,13 @@ title: "Duration Estimation"
 
 Language models are increasingly used in planning agents, scheduling tools, and personal assistants. But they often lack a critical component: an accurate, contextual understanding of how long a task takes for a given user. 
 	
+Examples: 
+
+  ```
 	How long does it take to grill 1.5 lb of salmon at 450°F?  
 	To complete a 3-set squat workout at 185 lbs?  
 	To review 20 Anki cards on pharmacokinetics?
-
+ ```
 Estimating duration is not a factual lookup or static retrieval. It depends on the task, the user, and the context in which the user is embedded. 
 
 **Generating Conditional Distributions for Task Duration**
@@ -159,118 +162,5 @@ Reinforces the user's autonomy and preferences without requiring constant re-spe
 | ----------------------------------------------- | ---------------------------------------------------------------------------------- |
 | “How do you want this steak cooked?” every time | “Cooking your steak medium rare as usual — want to update that?”                   |
 | “How long do you study per topic?”              | “Last time, you preferred short bursts — should I plan another 20-minute session?” |
-##### Improving Predictive Capacity of a Model 
-
-Storing metadata of expected_preference and observed_preference
-
-Using these methods, we can gradually track and improve a model's predictive precision
-
-1. **Reducing entropy in decision space**
-
-**Personalization Reduces Entropy**
-**And Entropy Narrows Inference Trajectories**
-**Which Can Decrease Latency and Cost of Reasoning** 
 
 
-**Reduced entropy = fewer competing hypotheses**
-
-When a model knows a user's preferences or task phenotype, it doesn't have to 
-
-- Evaluate a broad set of possible completions 
-- Over-generate hedged or general-purpose responses 
-- Search across wide latent space embeddings 
-
-This compresses the reasoning trace and allows: 
-
-- Faster token generation
-- Opportunity to develop and audit internal plan graphs for agent behavior
-
-**Personalization as Soft Constraint Pruning**
-
-This behaves like applying a prior to the reasoning tree: 
-
-	You're not just solving “how should I cook this steak?” but “how should _I_ cook this steak, given my tools, preferences, and feedback history.”
-
-Each constraint prunes branches early in the computation -- limits and narrows the search space, improving responses and behavior. 
-
-**Less Sampling Required at Inference**
-
-With more sharply defined distributions (e.g., mean ± std aligned to user or task) 
-
-- Sampling ranges tighten
-- Login filtering and re-ranking becomes more confident 
-- Faster beam search 
-
-This is true across:
-
-- **Language completion**
-    
-- **Plan formulation**
-    
-- **API function routing**
-    
-- **Multimodal grounding**
-
-
-
-You’re describing a **phenotype-aware inference system**:
-
-- Where reasoning is guided by prior traces, user phenotype, and compressed history
-    
-- Which ultimately leads to **faster**, **cheaper**, and **better-targeted** outputs
-
-This is deeply aligned with:
-
-- **Test-time adaptation**
-    
-- **Meta-learning (fast weights vs. slow weights)**
-    
-- **Latent user modeling** in recommender systems
-
-**Directly translates into lower latency, fewer hops in reasoning chains, and more predictable generation paths**.
-
-***
-
-#### Impliocations for Re-Ranking 
-
-**1. Prioritized Scoring with Tighter Bounds**
-
-When the model or agent already has a sharp prior (e.g., `mean_duration = 3.7`, `std = 0.3`), you can:
-
-- Penalize outputs that deviate significantly from the expected range.
-    
-- Boost candidates whose durations (or explanations, plans, etc.) align tightly with the user-specific prior.
-    
-
-This turns re-ranking from:
-
-> “What’s most likely or most fluent?”  
-> into:  
-> “What’s most likely _for this user_, in this context?”
-
-**Reduced Candidate Set Entropy**
-
-If you’re re-ranking 10–50 candidate outputs (common in retrieval or LLM beam search), personalized distributions allow you to:
-
-- Prune low-probability candidates earlier (before expensive scoring)
-    
-- Use narrower scoring criteria (e.g., temporal alignment, doneness match)
-    
-- Filter based on implicit goals (e.g., user wants quick, under-5-minute suggestions)
-    
-
-This **shrinks the viable candidate pool**, improving latency and precision.
-
-
-|Feature|Example|
-|---|---|
-|`abs(user_estimate - candidate_duration)`|Penalize large deviations|
-|`overlap_with_user_feedback_phrases`|Boost “seared” if user liked that before|
-|`historical_fit_score`|Has a similar candidate worked well before?|
-Typical re-ranking treats all users and all tasks as equal — which creates noisy, bloated candidate sets.
-
-With task-grounded and user-aligned distributions:
-
-- Your re-ranker works **with a tuned prior**, not against general uncertainty
-    
-- You **increase determinism** without sacrificing adaptability
