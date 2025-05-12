@@ -1,4 +1,73 @@
 ---
-title: "iCalendar Sync"
+title: "iCalendar Integration"
 ---
-_Content coming soon._
+
+This guide explains how to sync memory trace data with the native macOS Calendar using AppleScript. This approach supports local iCloud-synced calendars without requiring API credentials or cloud setup.
+
+## Overview
+
+This module enables local calendar integration on macOS:
+
+- Converts memory traces from JSON into AppleScript-formatted events  
+- Writes directly to the local Calendar app (e.g., iCloud-synced "Home" calendar)  
+- Requires no external API or OAuth setup  
+
+## Requirements
+
+- macOS with Calendar app installed  
+- Python 3.8+  
+- AppleScript (osascript) available on macOS terminal  
+- A local calendar named Home (or any custom calendar name you specify)
+
+## Run the Sync Script
+
+From the project root:
+
+python modules/calendar_io/sync_mac_calendar.py
+
+This will:
+
+- Load a memory trace file (JSON format)  
+- Parse each memory item  
+- Convert to AppleScript and invoke via osascript  
+- Log success or errors per event
+
+## Python Module Overview
+
+### memory_trace_to_applescript(trace, calendar_name="Home")
+
+- Parses a memory trace with a UTC timestamp  
+- Formats start/end time in AppleScript-compatible string  
+- Constructs a detailed event:  
+  - summary: Derived from trace type and content  
+  - description: Includes full trace content and metadata (task ID, importance, etc.)  
+- Returns a valid AppleScript string to be executed
+
+### create_event(trace, calendar_name)
+
+- Runs osascript to create an event via AppleScript  
+- Handles escaping and formatting internally
+
+### sync_memory_file_to_mac_calendar(memory_json_path, calendar_name)
+
+- Loads a full .json session (with list of memory traces)  
+- Validates each trace using your schema  
+- Creates events one-by-one  
+- Logs number of successfully synced events and any failures
+
+Example:
+
+memory_path = Path("data/conversation/raw/lab_manager_4-12.json")  
+sync_memory_file_to_mac_calendar(memory_path)
+
+## Security & Best Practices
+
+- Events are only written to local calendars—no external access is required  
+- Validate your calendar_name exists in macOS Calendar before syncing  
+- Use validate_memory_trace() to guard against invalid input or format drift  
+
+## Limitations
+
+- Only runs on macOS (due to reliance on AppleScript)  
+- No two-way sync (events created in Calendar are not reflected back to memory traces)  
+- Execution may be rate-limited by system AppleScript policies if abused
