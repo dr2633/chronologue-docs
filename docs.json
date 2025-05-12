@@ -27,7 +27,11 @@
             "pages": [
               "concepts/export-calendar",
               "concepts/import-calendar",
-              "concepts/event-embeddings"
+              "concepts/event-embeddings",
+              "concepts/tempo-tokens",
+              "concepts/agent-orchestration-interface", 
+              "concepts/duration-estimation",
+              "concepts/memory-tagging",
             ]
           },
          
