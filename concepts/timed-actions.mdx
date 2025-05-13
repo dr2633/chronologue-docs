@@ -1,0 +1,174 @@
+---
+title: "Coordinating Timed Agent Actions"
+sidebarTitle: "Timed Actions"
+---
+
+## 1. Overview: Why Timed Agent Actions Matter
+
+Coordinating **timed actions between agents** is foundational for persistent, useful agent systems—especially in real-world or long-horizon tasks. Time must be treated as a **coordination surface** in any system that aims to reliably schedule, trigger, and audit agent behavior.
+
+There is a core tension to resolve:  
+Should time be handled **internally** by the model (e.g., via Python timers), or **externally** via infrastructure (e.g., calendar events, job queues, or event buses)?
+
+Chronologue externalizes time management for long-term reliability and coordination across agents, devices, and platforms.
+
+---
+
+## 2. Options for Handling Time
+
+### Option 1: Model Writes Code to Handle Time
+
+Example: `time.sleep(3600)` or `await asyncio.sleep(...)`
+
+**Pros:**
+- Self-contained execution
+- Simple to simulate delays in short-lived tasks
+
+**Cons:**
+- Not reliable for long delays (e.g., hours/days)
+- Context may be lost if agent is terminated
+- No shared or observable state for other agents
+
+**Use case:** Ephemeral scripts or local automation only.
+
+---
+
+### Option 2: Delegate to External Scheduler
+
+Agents write plans to infrastructure like:
+- `.ics` files (Google/Apple calendar)
+- Redis queues with time-based triggers
+- APScheduler jobs in FastAPI apps
+- LangGraph nodes with built-in timers
+
+**Pros:**
+- Durable, observable state
+- Distributed coordination and time-zone awareness
+- Supports multiple agents/devices
+- Enables debugging, rerouting, and modification
+
+**Verdict:** The most scalable and reliable path.
+
+---
+
+## 3. Temporal Middleware Design Pattern
+
+Introduce a **temporal coordination layer** between agent planning and agent execution.
+
+Steps:
+
+1. **Plan generation**
+   LLM or planner proposes a task with `scheduled_for` field
+
+2. **Storage**
+   Persist as a structured trace (`calendar_event`, `task_id`)
+
+3. **Trigger**
+   External system notifies or invokes agents at execution time
+
+This mirrors job queues in web infrastructure but with semantically meaningful tasks and temporal tags.
+
+---
+
+## 4. Calendar-Based Execution
+
+**Example:** Agent generates `.ics` file to feed the dog at 6 PM
+
+Trace:
+
+```json
+{
+  "type": "calendar_event",
+  "timestamp": "2025-05-11T06:55:00Z",
+  "scheduled_for": "2025-05-11T07:00:00Z",
+  "title": "Feed the dog",
+  "content": "Place dog food into the bowl",
+  "tempo_tag": "@morning @daily",
+  "task_id": "task-001",
+  "uid": "evt-001",
+  "duration_minutes": 5
+}
+```
+
+This can be rendered as a user-facing calendar view or fed into an agent runtime that monitors the current time and dispatches actions.
+
+---
+
+## 5. Task Queue / Job Scheduling Integration
+
+Use Redis + APScheduler or a similar pattern:
+
+1. Agent writes task to queue with `scheduled_for`
+2. Scheduler polls or receives signal when time is met
+3. Agent is notified or invoked with payload
+
+Useful for:
+- Delayed reminders
+- Coordination across devices
+- Notifications or external API calls
+
+---
+
+## 6. Trace Format Specification
+
+All timed actions share a common structure:
+
+```json
+{
+  "type": "calendar_event",
+  "timestamp": "2025-05-11T08:00:00Z",
+  "scheduled_for": "2025-05-11T12:00:00Z",
+  "title": "Clean Room 1705",
+  "content": "Child guest: check under beds, toy sanitization, extra towels requested.",
+  "room_number": "1705",
+  "assigned_to": "crew-03",
+  "tempo_tag": "@family-suite 60min_block",
+  "task_id": "room-1705-0511",
+  "uid": "evt-1705",
+  "duration_minutes": 60
+}
+```
+
+Recommended fields:
+- `type`
+- `timestamp`
+- `scheduled_for`
+- `title`, `content`
+- `task_id`, `uid`
+- `tempo_tag`
+- `duration_minutes`
+- Optional: `assigned_to`, `trigger_condition`, `feedback_notes`
+
+---
+
+## 7. Use Case: Hotel Room Coordination
+
+Coordinating cleaning and inspections across multiple rooms with time-triggered events and agent handoff:
+
+1. Clean room → trace logged with `scheduled_for`
+2. Manager inspects → scheduled via linked `uid`
+3. Feedback loop logs deviations or updates
+
+```json
+{
+  "type": "calendar_event",
+  "scheduled_for": "2025-05-11T11:30:00Z",
+  "title": "Inspect Suite 1901",
+  "content": "Manager inspection before VIP guest arrival. Verify scent profile and towel folding.",
+  "room_number": "1901",
+  "assigned_to": "manager-01",
+  "tempo_tag": "@post-clean-inspection",
+  "task_id": "room-1901-inspect-0511",
+  "uid": "evt-1901a",
+  "duration_minutes": 15
+}
+```
+
+---
+
+## 8. Best Practices and Extensibility
+
+- Make `scheduled_for` and `deviation_ms` first-class fields in all traces
+- Use standardized `tempo_tag` formats (`@morning`, `30min_block`, `@daily`)
+- Build plug-and-play backends (calendar, Redis, APScheduler, event bus)
+- Keep models focused on **planning**, not **execution logic**
