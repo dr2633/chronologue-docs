@@ -1,0 +1,138 @@
+---
+title: "Tempo Token Specification"
+group: "API"
+---
+
+# Tempo Tokens
+
+Tempo tokens are structured, time-grounded annotations designed to encode temporal context directly into agent planning, memory, and inference pipelines. They offer a scalable, model-compatible interface for representing absolute, relative, and semantic time in Chronologue.
+
+Unlike standard positional encodings used in transformers, tempo tokens embed calendar-aware, clock-aware, and recurrence-aware representations directly into memory traces and planning prompts.
+
+---
+
+## 1. Purpose
+
+Language models lack inherent calendar and clock awareness.  
+Tempo tokens aim to:
+
+- Enable agents to reason about when something happened or should happen  
+- Provide consistent temporal structure across planning, execution, and feedback  
+- Allow LLMs to learn, predict, and align with realistic time constraints  
+- Facilitate retrieval, summarization, and profiling by time  
+
+---
+
+## 2. Format and Field Integration
+
+Tempo tokens are stored in memory traces as an array field:
+
+| Field          | Type      | Description                                      |
+|----------------|-----------|--------------------------------------------------|
+| tempo_tokens   | array     | List of tempo annotations for the trace         |
+
+Example:
+
+tempo_tokens: [  
+  <tempo:2025-04-30T15:00Z>,  
+  <tempo:Wednesday>,  
+  <tempo:Afternoon>,  
+  <tempo:duration-30min>,  
+  <tempo:urgent>,  
+  <tempo:handoff-required>  
+]
+
+These tokens are not inferred at runtime — they are generated at ingestion or export and may also be inserted during dataset construction for pretraining.
+
+---
+
+## 3. Token Categories and Examples
+
+| Category        | Format Example                          | Description                                |
+|------------------|-----------------------------------------|--------------------------------------------|
+| Datetime         | <tempo:2025-04-30T15:00Z>               | Absolute event anchor                      |
+| Weekday          | <tempo:Monday>                          | Weekly structure awareness                 |
+| Time of Day      | <tempo:Afternoon>                       | Circadian alignment                        |
+| Duration         | <tempo:duration-45min>                  | Action span for scheduling                 |
+| Deadline         | <tempo:deadline-2025-04-30T16:00Z>      | Future-oriented planning constraint        |
+| Recurrence       | <tempo:recurring-weekly>                | Recurring task behavior                    |
+| Urgency          | <tempo:urgent>                          | Task priority for planning agents          |
+| Event Type       | <tempo:shipment>, <tempo:handoff>       | Task classification and routing            |
+| Location         | <tempo:location-Lab3>                   | Spatial grounding                          |
+| Relative Time    | <tempo:in-2h>, <tempo:past-1d>          | Temporal proximity or recency              |
+| Availability     | <tempo:available>, <tempo:unavailable>  | Coordination constraint                    |
+| Conflict         | <tempo:collision-2025-04-30T15:00Z>     | Scheduling conflict awareness              |
+
+---
+
+## 4. Generation Logic
+
+Tempo tokens are generated from `.ics`-formatted calendar events and memory trace metadata using:
+
+- `DTSTART`, `DTEND`, and `DURATION`  
+- ISO timestamps (timestamp, scheduled_for, executed_at)  
+- Task-specific metadata (e.g., location, completion_status, theme)  
+
+Tempo tokens are included as part of:
+
+- `.ics → JSON` conversion pipelines  
+- memory/push or functions/call endpoints  
+- Offline dataset construction for pretraining augmentation
+
+---
+
+## 5. Inference and Prompt Integration
+
+Tempo tokens are injected into system prompts and planning inputs to align models with structured time.
+
+Prompt Example:
+
+Upcoming Event: Inbound Shipment  
+<tempo:2025-04-30T15:00Z> <tempo:Wednesday> <tempo:Afternoon>  
+<tempo:urgent> <tempo:deadline-2025-04-30T16:00Z> <tempo:handoff-required>  
+<tempo:location-ReceivingDock3>
+
+CoT Result:
+
+Assign Priya. She is available from 14:00–18:00 and can manage the cold chain transfer before the 16:00 deadline. Prepare buffer storage in case of delay.
+
+---
+
+## 6. Validation and Token Registry
+
+All tempo tokens must conform to a centralized registry to ensure standardization.
+
+### Validation Rules:
+
+- Token matches an approved category and format  
+- Uses ISO 8601 for all datetime encodings  
+- Category-specific rules are enforced (e.g., durations must be in whole minutes)
+
+The API will reject or warn on invalid tokens during trace ingestion and `.ics` import.
+
+Optional endpoint:
+
+GET /tempo/tags → Returns list of valid token types and examples  
+POST /tempo/generate → Generates tempo tokens from `.ics` or memory trace input
+
+---
+
+## 7. Use Cases
+
+- Agent planning: infer scheduling feasibility from token tags  
+- Profiling: compare actual execution time vs. planned token alignment  
+- Summarization: extract temporally bounded trace windows  
+- Feedback: evaluate plan performance using token-aligned outcomes  
+- Scheduling: detect collisions, soft boundaries, and escalation paths
+
+---
+
+## 8. Best Practices
+
+- Always include a base timestamp token for absolute anchoring  
+- Use weekday and time-of-day for recurrence modeling  
+- Apply urgency, recurrence, and deadline tags in structured plans  
+- Validate token sets on ingestion or schedule preview  
+- Align tempo tokens with calendar metadata and feedback outcomes
+
+---
