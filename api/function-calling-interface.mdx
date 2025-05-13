@@ -1,0 +1,185 @@
+---
+title: "Function Calling Interface"
+---
+
+## 1. Introduction
+
+Chronologue's function calling interface allows agents, language models, and interactive tools to invoke structured actions through a well-defined schema. This layer bridges natural language intent with precise, executable instructions—powering planning, memory logging, calendar scheduling, and feedback loops.
+
+Function calls can be invoked via:
+- OpenAI’s `functions` or `tool_choice` API
+- Internal agent runtime (`/functions/call`)
+- Manual interface triggers (e.g., UI buttons or editable tables)
+
+---
+
+## 2. Use Cases
+
+- Translate user prompts into `agent_plan` actions  
+- Reflect on memory with structured `create_reflection` calls  
+- Log new observations or task completions  
+- Schedule calendar events based on structured parameters  
+- Edit traces or plans via interactive table or UI interface  
+
+---
+
+## 3. Function Calling Schema
+
+Each function includes:
+
+| Field        | Type     | Description                                       |
+|--------------|----------|---------------------------------------------------|
+| `name`       | string   | Unique identifier for the function                |
+| `description`| string   | Natural language summary of the function          |
+| `parameters` | object   | JSON Schema defining input parameters             |
+
+Example:
+
+```json
+{
+  "name": "schedule_task",
+  "description": "Create an agent plan to schedule a task with a specific time and duration.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "content": { "type": "string" },
+      "scheduled_for": { "type": "string", "format": "date-time" },
+      "duration_minutes": { "type": "integer" }
+    },
+    "required": ["content", "scheduled_for"]
+  }
+}
+```
+
+---
+
+## 4. Defined Functions in Chronologue
+
+| Function Name         | Purpose                                        |
+|------------------------|-----------------------------------------------|
+| `schedule_task`        | Create a new agent plan or calendar event     |
+| `create_reflection`    | Log a reflection trace                        |
+| `log_observation`      | Record real-time outcome or observation       |
+| `query_memory`         | Fetch traces within a given filter context    |
+| `submit_feedback`      | Rate or comment on an existing memory trace   |
+| `propose_revision`     | Suggest edits to an agent plan or schedule    |
+
+---
+
+## 5. API Integration with FastAPI
+
+Function calls are processed via:
+
+**POST `/functions/call`**
+
+Request body:
+
+```json
+{
+  "name": "schedule_task",
+  "arguments": {
+    "content": "Write CUDA blog post",
+    "scheduled_for": "2025-05-13T16:00:00Z",
+    "duration_minutes": 90
+  }
+}
+```
+The API dispatches the call, validates parameters with Pydantic, and returns a result:
+
+- A new memory trace  
+- A `calendar_event` block  
+- A confirmation or summary message
+
+---
+
+## 6. Function Calling with LLMs
+
+Chronologue registers these functions with tool-enabled LLM runtimes (e.g. OpenAI, Claude).
+
+Prompt:
+
+> “Schedule a writing session for tomorrow afternoon.”
+
+Resulting call:
+
+```json
+{
+  "function_call": {
+    "name": "schedule_task",
+    "arguments": {
+      "content": "Writing session",
+      "scheduled_for": "2025-05-13T14:00:00Z",
+      "duration_minutes": 120
+    }
+  }
+}
+```
+
+The returned trace is optionally previewed before saving.
+
+---
+
+## 7. Design Principles
+
+- **Schema-driven**: Validated with JSON Schema and Pydantic  
+- **Composable**: Output can be stored, revised, or chained  
+- **Reversible**: Every function call result is a trace  
+- **Minimal**: Only expose essential agent operations  
+
+---
+
+## 8. Error Handling and Feedback
+
+When a function call fails:
+
+- Returns a `400` or `422` response with detail  
+- `trace_id` is included for log correlation  
+- Suggestions (`hint`) may be returned for retry
+
+Example error response:
+
+```json
+{
+  "error": "Missing required field 'scheduled_for'",
+  "status": 422,
+  "hint": "Include a valid ISO timestamp for the schedule."
+}
+```
+
+---
+
+## 9. Manual Function Calls from UI (Editable Calendar/Table)
+
+Chronologue supports invoking functions directly from:
+
+- Calendar editors (e.g., dragging a block)  
+- Markdown tables in chat interface (editable fields)  
+
+### Example Table (Editable in UI):
+
+| Action         | Time              | Duration | Feedback | Edit             |
+|----------------|-------------------|----------|----------|------------------|
+| Reflect        | 2025-05-10 22:00  | 15 min   | 4/5      | [Edit]           |
+| Call Mom       | 2025-05-11 10:00  | 30 min   | -        | [Reschedule]     |
+| Plan Week      | 2025-05-12 08:00  | 45 min   | 5/5      | [Adjust + Repeat]|
+
+On interaction, each `Edit` button triggers a corresponding function call:
+
+- `propose_revision`  
+- `reschedule_task`  
+- `update_trace_field`
+
+This interface allows users to **manually invoke functions**, not just through LLMs.
+
+---
+
+## 10. Related Modules
+
+- [Agent DSL and Execution Model](../core-concepts/agent-dsl-and-execution-model.mdx)  
+- [Memory Trace Schema](./memory-trace-schema.mdx)  
+- [API Endpoints Overview](./api-endpoints-overview.mdx)  
+- [OpenAI Function Calling Guide](https://platform.openai.com/docs/guides/function-calling)
+
+---
+
+Chronologue’s function calling interface enables structured, transparent, and user-aligned interaction with agents. Whether invoked by an LLM, clicked in a UI, or scheduled via planner, each function brings natural language closer to structured, traceable execution.
