@@ -1,0 +1,140 @@
+---
+title: "Error Codes and Debugging"
+---
+
+## 1. Introduction
+
+Chronologue uses FastAPI to serve a structured, schema-validated API for memory, planning, and scheduling operations. Clear error handling and standardized debug protocols are essential to supporting agents, developers, and users interacting with the system.
+
+This page documents all core error codes, response formats, debugging tools, and recommended resolution strategies for API clients and developers.
+
+---
+
+## 2. HTTP Status Code Reference
+
+| Code | Meaning                | Description                                           |
+|------|------------------------|-------------------------------------------------------|
+| 200  | OK                     | Successful request (default response)                 |
+| 201  | Created                | Resource was successfully created                     |
+| 400  | Bad Request            | Request failed schema or logic validation             |
+| 401  | Unauthorized           | Missing or invalid API key                            |
+| 403  | Forbidden              | Valid auth but insufficient permissions               |
+| 404  | Not Found              | Resource not found (trace, plan, event)               |
+| 409  | Conflict               | Resource already exists or cannot be merged           |
+| 422  | Unprocessable Entity   | Failed Pydantic model validation                      |
+| 429  | Too Many Requests      | Exceeded rate limits                                  |
+| 500  | Internal Server Error  | Unhandled backend error or crash                      |
+
+---
+
+## 3. FastAPI Exception Handling
+
+Chronologue uses FastAPI’s `HTTPException` to raise structured errors with code and message pairs. Pydantic model validation automatically returns `422` errors on bad inputs.
+
+Custom exceptions include:
+
+- `TraceConflictException` – raised on conflicting trace `uid` or edit attempts  
+- `PlanError` – raised when agent plans fail structural checks or exceed constraints  
+- `UnauthorizedAgentAccess` – used when an agent is not permitted to access a user trace
+
+All exceptions return structured JSON.
+
+---
+
+## 4. Error Response Structure
+
+All API errors return a JSON payload with the following shape:
+
+json
+{
+  "error": "Invalid tempo_token",
+  "status": 400,
+  "detail": "The provided tempo_token 'Morning@Night' is not recognized.",
+  "trace_id": "req-abc123"
+}
+
+| Field     | Description                                             |
+|-----------|---------------------------------------------------------|
+| `error`   | Brief label describing the error                        |
+| `status`  | HTTP status code                                        |
+| `detail`  | Expanded explanation, with field or context references  |
+| `trace_id`| Request-level identifier for tracing/debugging          |
+| `hint`    | (Optional) Fix suggestions or reference documentation   |
+
+---
+
+## 5. Debugging Tools and Logging
+
+Chronologue uses FastAPI’s `logging` module and Uvicorn’s structured output for diagnostics.
+
+### Developer Tips:
+- Each API response includes a `trace_id` header or field (if an error occurs)  
+- Server logs use structured levels: `TRACE`, `INFO`, `WARNING`, `ERROR`  
+- Logs can be routed to Sentry, Logtail, or other backends for inspection
+
+To enable live logs locally:
+
+bash
+uvicorn chronologue.api.main:app --reload --log-level debug
+
+---
+
+## 6. Client-Side Debugging Tips
+
+- Use `curl -v` or Postman to inspect headers and body  
+- Include `Content-Type: application/json` in all POST requests  
+- Review full payloads: missing `scheduled_for` or malformed `tempo_token` can cause 422 errors  
+- Validate request schema using examples in API reference
+
+---
+
+## 7. Common Error Patterns and Fixes
+
+| Error Code | Pattern                    | Resolution                                         |
+|------------|----------------------------|----------------------------------------------------|
+| `422`      | Pydantic validation fail   | Check required fields and types                    |
+| `409`      | Duplicate `uid` or plan    | Use `PATCH` or regenerate trace ID                 |
+| `403`      | Agent not authorized       | Check agent scope or user ID binding               |
+| `404`      | Trace or event not found   | Verify `task_id` or `trace_uid`                    |
+| `500`      | Server error               | Retry or contact support with `trace_id`           |
+
+---
+
+## 8. Trace Dump Endpoint (for Development Only)
+
+**POST `/debug/trace-dump`**
+
+- Input: `trace_uid`, `task_id`, or `linked_event_uid`  
+- Returns: full memory trace object, causal links, and profile metadata  
+- Access: only enabled in debug mode (`DEBUG=true`)  
+
+Use this endpoint to inspect misbehaving traces or pre-runtime agent memory state.
+
+---
+
+## 9. Rate Limiting and Throttling
+
+Chronologue applies soft rate limits by API key and IP address.
+
+- Default: `100 requests / minute / user`  
+- Status code: `429 Too Many Requests`  
+- Header: `Retry-After: 30` (seconds)
+
+Recommended strategy:
+
+- Use exponential backoff for retrying  
+- Limit aggressive polling or synchronous agent executions
+
+---
+
+## 10. Related Pages
+
+- [Authentication and Headers](./authentication-and-headers.mdx)  
+- [Memory Trace Schema](./memory-trace-schema.mdx)  
+- [API Endpoints Overview](./api-endpoints-overview.mdx)  
+- [FastAPI: Exception Handling](https://fastapi.tiangolo.com/tutorial/handling-errors/)  
+- [Uvicorn Logging](https://www.uvicorn.org/settings/)
+
+---
+
+Chronologue’s API is designed to fail transparently and traceably. Use structured error responses, trace IDs, and developer tools to quickly identify issues, debug behavior, and optimize your agent integrations.
