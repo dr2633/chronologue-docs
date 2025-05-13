@@ -5,100 +5,175 @@ group: "Architecture"
 
 # Temporal Agent Runtime and Profiling
 
-Chronologue is designed as a **temporal compiler for agent behavior**. Inspired by CUDA’s host-device execution model and profiling tools, the system enables users to write structured, time-aware plans, orchestrate agent actions, and evaluate performance over time through memory traces and structured feedback.
+Chronologue is designed as a temporal compiler for agent behavior. Inspired by CUDA’s host-device execution and profiling stack, the system allows users and agents to define structured, time-aware plans, coordinate action execution, and record performance over time using trace-based profiling.
 
-This architecture turns the calendar into a runtime coordination surface, where users don’t just schedule tasks—they program agents.
-
----
-
-## 1. The Host-Device Model for Agents
-
-Chronologue follows a model similar to CUDA’s host-device abstraction:
-
-- **Host**: The user (or LLM planner) orchestrates work by defining agent plans and temporal intent.
-- **Device**: The agent executes structured tasks like scheduling events, writing reflections, or logging activities.
-- **Queue**: Proposed actions wait in the planner queue until approved and scheduled for execution.
-- **Profiler**: Logs traceable performance and alignment data to support adaptive behavior.
-
-### Mapping Concepts
-
-| Chronologue Role | CUDA Analogy | Description |
-|------------------|--------------|-------------|
-| `agent_plan`     | Kernel Launch | Encapsulates a task and when to execute it |
-| `executor`       | GPU threads   | Performs the action according to plan |
-| `tempo_token`    | Stream config | Temporal granularity and alignment metadata |
-| `profiling`      | Nsight/CUPTI  | Logs execution time, accuracy, and feedback |
+The runtime turns the calendar into an execution surface. It doesn't just track when things happen—it controls how agents behave, learn, and adapt across time.
 
 ---
 
-## 2. Compiler + Runtime Pipeline
+## 1. Introduction
 
-Chronologue functions like a temporal DSL + execution system:
+Chronologue’s runtime operates as the execution layer of the Agent DSL. It takes in structured agent plans, schedules them via a planner queue, dispatches execution through an agent interface, and logs performance metadata for auditing, learning, and optimization.
 
-- **Plan**: User or agent defines action (`agent_plan`) with scheduling metadata
-- **Schedule**: The system resolves `tempo_token`, checks constraints, and queues execution
-- **Execute**: An executor runs the agent behavior and commits resulting memory traces
-- **Profile**: Execution is logged with metadata like `executed_at`, `deviation_ms`, and `feedback_score`
-
-This system enables composable planning, reliable delegation, and feedback-driven improvement of agent performance over time.
+This enables:
+- Reliable delegation of tasks to agents
+- Auditability of execution timelines
+- Feedback-driven planning through time-aware profiling
 
 ---
 
-## 3. Agent Execution and Trace Profiling
+## 2. Host-Device Runtime Model
 
-After each agent action is executed, the system records **profiling metadata** to support:
+Chronologue mirrors CUDA’s execution architecture:
 
-- **Auditing**: What happened, when, and how closely did it match the plan?
-- **Learning**: Was the result helpful? Did the user approve or revise?
-- **Scheduling feedback**: Was the execution on time, early, or delayed?
+| Chronologue Role | CUDA Analogy     | Description |
+|------------------|------------------|-------------|
+| agent_plan       | Kernel Launch    | Defines task intent and timing |
+| executor         | GPU threads      | Executes plan as structured action |
+| scheduler        | Grid/block       | Maps time-based scheduling to planner queue |
+| tempo_token      | Stream config    | Encodes timing granularity and alignment |
+| profiler         | CUPTI/Nsight     | Logs execution metadata and feedback |
+| MemPort          | cudaMemcpy       | Transfers memory context between agents |
 
-Profiling metadata may include:
-
-- `executed_at`: timestamp of actual execution
-- `tempo_alignment`: comparison against intended token
-- `feedback_score`: user rating
-- `duration_ms`, `deviation_ms`
-
-For a full field-by-field specification and implementation guide, see the [Trace Profiling Schema](./trace_profiling_schema).
+The user or LLM planner acts as the host, while the executor represents the agent-side runtime.
 
 ---
 
-## 4. Repository Organization for DSL + Runtime
+## 3. Compiler and Runtime Phases
 
-To build and maintain this architecture, organize the Chronologue repo as follows:
+Chronologue’s runtime architecture mirrors a DSL compiler stack:
 
+- Plan: DSL input via prompt or structured `agent_plan` schema
+- Schedule: Resolve timing constraints (`scheduled_for`, `tempo_token`)
+- Execute: Run agent behavior and persist results
+- Profile: Capture runtime data for performance modeling
+- Reflect: Optionally summarize, tag, or revise based on outcome
+
+Each phase is implemented as a module in the `runtime/` directory.
+
+---
+
+## 4. Agent Execution Lifecycle
+
+The runtime pipeline consists of the following steps:
+
+1. **Queueing**  
+   The `agent_plan` enters the planner queue (scheduler.py) with intent, constraints, and optional conditions.
+
+2. **Execution**  
+   The executor (executor.py) dispatches the action, logging `executed_at`, `duration_ms`, and status. Memory traces are created if applicable.
+
+3. **Profiling**  
+   The profiler (profiler.py) compares actual execution to plan. It logs:
+   - Tempo alignment
+   - User feedback
+   - Latency and deviation
+
+4. **Reflection or Revision**  
+   The system may generate a reflection, suggest a follow-up, or annotate misalignment.
+
+---
+
+## 5. Profiling Metadata
+
+Each executed trace includes a nested `profiling` object:
+
+Example:
+
+```json
+profiling: {
+  schema_version: "v1",
+  executed_at: "2025-05-11T20:03:12Z",
+  duration_ms: 182000,
+  deviation_ms: 192000,
+  tempo_token: "<tempo:EveningReview>",
+  tempo_alignment: "partial",
+  feedback_score: 4,
+  agent_latency_ms: 2300,
+  reward_signal: 0.7
+}
 ```
-chronologue/  
-├── schemas/  
-│ ├── agent_plan.py  
-│ ├── feedback_trace.py  
-│ └── profiling.py  
-├── runtime/  
-│ ├── scheduler.py  
-│ ├── executor.py  
-│ ├── profiler.py  
-│ └── queue.py  
-├── tempo/  
-│ └── tokens.py  
-├── api/  
-│ ├── routes_agent.py  
-│ └── routes_feedback.py  
-├── frontend/  
-│ ├── components/AgentQueuePanel.tsx  
-│ ├── components/FeedbackModal.tsx  
-│ └── components/ProfilerTimeline.tsx
-```
 
-This separation cleanly supports DSL definition, plan scheduling, runtime execution, and result introspection.
+The runtime writes this block once execution completes and optionally includes additional fields like:
+
+- attempts[]: fallback or retry logs
+- execution_result: return_type, status, output trace
+
+See the Trace Profiling Schema for full specification.
 
 ---
 
-## 5. Summary
+## 6. Filesystem and Module Structure
 
-Chronologue is not just a scheduler—it is a **temporal programming interface for agents**. By modeling the orchestration of behavior over time, it provides:
+Chronologue’s runtime architecture is modular and testable.
 
-- Programmability: composable intent with runtime guarantees
-- Auditability: every agent action is logged and reviewable
-- Adaptivity: agent plans evolve based on profiling and feedback
+chronologue/
+├── schemas/
+│   ├── agent_plan.py
+│   ├── feedback_trace.py
+│   └── profiling.py
+├── runtime/
+│   ├── scheduler.py         # queues and time resolution
+│   ├── executor.py          # triggers agent actions
+│   ├── profiler.py          # computes tempo and latency metrics
+│   └── queue.py             # interfaces with planner queue
+├── tempo/
+│   └── tokens.py            # standardizes tempo parsing and alignment
+├── api/
+│   ├── routes_agent.py
+│   └── routes_feedback.py
+├── frontend/
+│   ├── AgentQueuePanel.tsx
+│   ├── FeedbackModal.tsx
+│   └── ProfilerTimeline.tsx
 
-For runtime to be trustworthy, it must be traceable. The combination of memory traces and execution profiling is what enables scalable, safe agent behavior over time.
+---
+
+## 7. Developer Guidelines for Extending Runtime
+
+- Use schema-bound inputs and outputs (`agent_plan`, `profiling`)  
+- Wrap all agent execution in a traceable event with UID  
+- Log profiling data in a structured, versioned format  
+- Store failed and successful attempts with audit reasons  
+- Include `trace_id` and `planned_by` metadata for every run  
+- Validate tempo alignment using registered token windows
+
+---
+
+## 8. Execution Trace Example
+
+```json
+{
+  uid: "agent-plan-2025-05-11-reflect",
+  type: "agent_plan",
+  scheduled_for: "2025-05-11T20:00:00Z",
+  content: "Reflect on the day",
+  profiling: {
+    executed_at: "2025-05-11T20:03:12Z",
+    duration_ms: 182000,
+    deviation_ms: 192000,
+    tempo_token: "<tempo:EveningReview>",
+    tempo_alignment: "partial",
+    feedback_score: 4,
+    reward_signal: 0.7,
+    agent_latency_ms: 2300,
+    execution_result: {
+      status: "completed",
+      trace_id: "trace-456",
+      return_type: "trace"
+    }
+  }
+}
+```
+
+This execution log enables system tuning, plan evolution, and agent self-improvement.
+
+---
+
+## 9. Related Modules
+
+- Agent DSL and Execution Model  
+- Trace Profiling Schema  
+- Tempo Token Specification  
+- Memory Trace Schema  
+- MemPort Context Export
