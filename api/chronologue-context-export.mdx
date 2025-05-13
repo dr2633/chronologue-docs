@@ -1,0 +1,165 @@
+---
+title: "Chronologue Context Export"
+---
+
+## 1. Introduction
+
+Chronologue enables agents and systems to retrieve structured memory context via the MemPort export protocol. The context export interface allows external tools, planner agents, or runtime environments to pull memory traces across time, tempo, and task boundaries.
+
+This protocol supports **summary-level**, **full**, **linked**, and **delta** exports. It serves as the memory transfer layer for hydrating agent runtimes, exporting for review or analysis, and restoring or transferring state between agents or models. 
+
+---
+
+## 2. Use Cases
+
+- Hydrate agent runtime with relevant trace context before task execution  
+- Share trace summaries with external planning or evaluation tools  
+- Reconstruct causal chains from memory (`linked_trace_ids`)  
+- Export historical trace logs for auditing, reflection, or simulation  
+- Recover lost agent state by time-bound export and rehydration
+
+---
+
+## 3. Context Export Schema
+
+Core fields used in context export queries:
+
+| Field         | Type      | Description                                       |
+|---------------|-----------|---------------------------------------------------|
+| `user_id`     | string    | Unique user identifier                            |
+| `start_time`  | ISO 8601  | Start of time window (inclusive)                  |
+| `end_time`    | ISO 8601  | End of time window (inclusive)                    |
+| `tempo_tag`   | string    | Filter traces tagged with a specific tempo label  |
+| `task_id`     | string    | Export all traces linked to a task                |
+| `export_format` | string  | One of: `summary`, `full`, `linked`, `diff`       |
+
+Optional query fields:
+
+- `group_by`: `day`, `task`, `trace_type`  
+- `include_feedback`: boolean  
+- `max_token_count`: integer (for summaries)
+
+---
+
+## 4. Export Modes
+
+### `summary`
+- Token-optimized export for use in LLM prompts  
+- Includes trace `type`, `task_id`, `timestamp`, and compressed `content`
+
+### `full`
+- Raw memory trace export (JSON schema)  
+- Used for persistence, archival, or external analysis
+
+### `linked`
+- Recursively collects traces connected via `linked_trace_ids`  
+- Useful for reconstructing causal chains
+
+### `diff`
+- Computes trace differences between two timepoints or exports  
+- Used for incremental syncing, audit deltas, or simulation replay
+
+---
+
+## 5. Endpoint Specification
+
+### `GET /memport/export`
+
+Query Parameters:
+
+| Param          | Type      | Required | Description                                |
+|----------------|-----------|----------|--------------------------------------------|
+| `user_id`      | string    | Yes      | User whose context is being exported       |
+| `start_time`   | ISO 8601  | Optional | Start time for filter                      |
+| `end_time`     | ISO 8601  | Optional | End time for filter                        |
+| `tempo_tag`    | string    | Optional | Filter by tempo label                      |
+| `task_id`      | string    | Optional | Filter by associated task                  |
+| `export_format`| string    | Yes      | `summary`, `full`, `linked`, or `diff`     |
+| `group_by`     | string    | Optional | `day`, `task`, `trace_type`                |
+
+All responses are returned in JSON format. `Content-Type: application/json`
+
+---
+
+## 6. Example Requests & Responses
+
+### Example: Export Daily Summary
+
+GET /memport/export?user_id=u001&start_time=2025-05-11T00:00:00Z&end_time=2025-05-11T23:59:00Z&export_format=summary
+
+Response:
+
+```json
+{
+  "user_id": "u001",
+  "export_format": "summary",
+  "results": [
+    {
+      "type": "observation",
+      "task_id": "goal-2025-05-11-deepwork",
+      "timestamp": "2025-05-11T10:00:00Z",
+      "summary": "Completed deep work sprint with minor distractions."
+    },
+    {
+      "type": "reflection",
+      "task_id": "goal-2025-05-11-deepwork",
+      "timestamp": "2025-05-11T20:30:00Z",
+      "summary": "Need to block Slack during morning sessions."
+    }
+  ]
+}
+```
+
+---
+
+## 7. FastAPI Implementation Notes
+
+- Use `@router.get("/memport/export")` with dependency injection for auth  
+- Validate input with `ExportQueryParams` Pydantic model  
+- Internally call `query_traces()` and apply formatting logic  
+- For `summary`, include token-count-aware compression if needed  
+- Support pagination or `limit/offset` for long exports  
+- Use `linked_trace_ids` to support `linked` export mode with trace recursion
+
+---
+
+## 8. Redis Acceleration Layer (Optional)
+
+Chronologue supports Redis-backed export acceleration:
+
+| Use Case                     | Redis Key Pattern                           |
+|------------------------------|---------------------------------------------|
+| Cache recent trace IDs       | `ctx:{user_id}:{YYYY-MM-DD}`                |
+| Cache summary export blocks  | `export:{user_id}:{scope}:{format}`         |
+| Ephemeral session memory     | `trace:{user_id}:{task_id}`                 |
+
+When enabled:
+
+- Exports check Redis cache before querying database  
+- Summaries are cached for 15–30 minutes by default  
+- Reduces response time for repeated or overlapping queries
+
+Best practices:
+
+- Use TTLs to prevent memory bloat  
+- Store Redis as cache, not source of truth  
+- Clear cache on user-triggered edits or trace updates
+
+---
+
+## 9. Security and Data Handling
+
+- All export endpoints require valid API key (`Authorization` header)  
+- User-level access: users can only export their own context  
+- Agents acting on behalf of users must be scoped with correct permissions  
+- Apply content filtering for sensitive fields (e.g., `authored_by`, `chat_url`)  
+- Versioned exports can be tagged and checkpointed for reproducibility
+
+---
+
+## 10. Related Concepts
+
+- [Memory Trace Schema](./memory-trace-schema.mdx)  
+- [Agent DSL and Execution Model](../core-concepts/agent-dsl-and-execution-model.mdx)  
+- [Google Calendar Integration](./integration-guide-google-calendar.mdx)  
+- [MemPort API Overview](./api-endpoints-overview.mdx)
