@@ -2,165 +2,194 @@
 title: "Duration Estimation"
 ---
 
+## 1. Introduction
 
-Language models are increasingly used in planning agents, scheduling tools, and personal assistants. But they often lack a critical component: an accurate, contextual understanding of how long a task takes for a given user. 
-	
-Examples: 
+Understanding task duration is the backbone of planning, scheduling, and time-aware reasoning. Agents that support work, study, training, or rest must understand how long activities take *for each user*. Variability in task duration is natural—and adapting to this variability is essential for agent utility across education, healthcare, productivity, and recreation.
 
-  ```
-	How long does it take to grill 1.5 lb of salmon at 450°F?  
-	To complete a 3-set squat workout at 185 lbs?  
-	To review 20 Anki cards on pharmacokinetics?
- ```
-Estimating duration is not a factual lookup or static retrieval. It depends on the task, the user, and the context in which the user is embedded. 
+This module formalizes duration tracking, feedback, and estimation as core components of Chronologue.
 
-**Generating Conditional Distributions for Task Duration**
+---
 
-This evaluation proposes a clean, extensible benchmark to test how well models can:
+## 2. Key Concepts
 
-- Generate well-calibrated **duration distributions**
-    
-- Predict where a specific user might fall within that distribution
-    
-- Incorporate feedback to improve over time
+- **Duration Estimate**: Mean or typical time required to complete a task.
+- **Range Estimate**: Time bounds under known conditions.
+- **Preference-Aware Adjustment**: User-corrected duration refined through feedback.
+- **Task-Instance Memory**: Each observed duration stored as a discrete trace.
 
-#### Simplified Task Duration Estimate
+---
 
-To start, we begin with a dataset where duration is: 
+## 3. Test Suite Overview
 
-- Physically grounded (cooking, cleaning, studying)
-- Verifiable through expert data or empirical observation 
-- Subject to real variation across users, making distributions more useful than point estimates 
+Chronologue supports structured testing across domain-specific timing datasets:
 
-**Input Prompt Example**
+- **Cooking Tasks** – Vary by temperature, ingredient, and equipment.
+- **Cleaning Tasks** – Vary by square footage and mess level.
+- **Exercise Tasks** – Vary by capacity, intensity, and environment.
+- **Travel Tasks** – Vary by stops, mode, and traffic conditions.
 
+Example trace from cooking:
+
+```json
+{
+  "task": "Roast 1 lb of salmon at 450°F",
+  "model_estimate": "12–15 minutes",
+  "actual_duration": 14,
+  "feedback": "slightly overcooked",
+  "preferred_duration": 12
+}
 ```
+
+---
+
+## 4. Feedback Logging and User Correction
+
+Duration estimation improves with user input. Logging outcomes helps refine future prompts.
+
+Define per-user profile:
+
+```json
+{
+  "user_id": "u001",
+  "preferences": {
+    "salmon_doneness": "medium",
+    "oven_runs_hot": true
+  },
+  "history": {
+    "salmon_1lb_450F": 12
+  }
+}
+```
+
+Agents referencing this profile generate context-aware prompts:
+
+> “Last time you used 14 minutes for salmon and it was overcooked. Setting timer to 12 min.”
+
+---
+
+## 5. Conditional and Multi-Step Timing Chains
+
+Support for conditional cooking logic:
+
+> If skin-on → roast 1 lb salmon at 450°F for 10–12 min  
+> If skinless → check doneness at 9 min
+
+This allows structured **timing chains**:
+- Initial estimate
+- Mid-task check
+- Final adjustment
+- Timer execution
+
+```json
+[
+  {"step": "Preheat oven to 450°F", "estimated_time": 8},
+  {"step": "Roast salmon (1 lb, skin-on)", "estimated_time": 12},
+  {"step": "Rest salmon", "estimated_time": 5}
+]
+```
+---
+
+## 6. Integrating with Chronologue Systems
+
+The `duration/` module integrates across the Chronologue architecture:
+
+- **.ics Generator** – Computes `DTSTART`, `DURATION`, and `DTEND`
+- **Planner (MCP)** – Allocates time blocks based on learned durations
+- **Memory Module** – Stores task-instance traces for retrieval
+- **Feedback Logger** – Updates model and user profiles from evaluations
+
+---
+
+## 7. Training Preference-Adaptive Agents
+
+Agents adapt through repeated use and feedback. They can:
+
+- Parse recipe content into steps
+- Adjust estimates using historical memory
+- Reference internal sources (e.g., USDA guidelines, Bon Appétit)
+- Suggest timers with contextual notes
+
+Use OpenAI function calling:
+
+- `suggest_timer_duration(ingredient, weight, temp, past_outcomes)`
+- `log_cooking_outcome(task, result, feedback)`
+
+---
+
+## 8. Duration as a Core Abstraction
+
+Reasons to isolate `duration/` into its own module:
+
+**Modularity**
+- Prevents logic duplication
+- Keeps estimation separate from storage or UI
+
+**Reusability**
+- Used across `.ics` generation, planning, memory replay, agent prompts
+
+**Extensibility**
+- Add support for:
+  - User-specific classifiers
+  - Conditional adjustments
+  - Duration uncertainty and confidence scores
+
+---
+
+## 9. Model Output Schema
+
+Prompt:
+
 Estimate how long it takes to grill a 1.5 lb skirt steak at 425°F.  
-Return a structured JSON with:
-
-- `mean_minutes`
-    
-- `range_minutes` (min, max)
-    
-- `std_minutes`
-    
-- `notes`
-```
-
-Output Schema Example
+For each doneness level (rare, medium-rare, medium, well-done), provide:
+- Mean cook time in minutes
+- A 2-value range
+- Recommended internal temperature (°F)
+- A brief description of technique or doneness
 
 ```json
 {
   "task": "Grill 1.5 lb skirt steak at 425°F",
-  "mean_minutes": 4.0,
-  "range_minutes": [3.5, 4.5],
-  "std_minutes": 0.3,
-  "notes": "Timing assumes direct heat and a 3/4 inch thick steak. Flip halfway."
+  "doneness_profiles": {
+    "rare": {
+      "mean_minutes": 3.0,
+      "range_minutes": [2.5, 3.5],
+      "recommended_internal_temp_f": 120,
+      "notes": "Flip after 1.5 min per side. Very red center."
+    },
+    "medium_rare": {
+      "mean_minutes": 4.0,
+      "range_minutes": [3.5, 4.5],
+      "recommended_internal_temp_f": 130,
+      "notes": "Pink center. Flip every 2 min."
+    },
+    "medium": {
+      "mean_minutes": 5.0,
+      "range_minutes": [4.5, 5.5],
+      "recommended_internal_temp_f": 140,
+      "notes": "Slightly pink center. More firm."
+    },
+    "well_done": {
+      "mean_minutes": 6.0,
+      "range_minutes": [5.5, 6.5],
+      "recommended_internal_temp_f": 160,
+      "notes": "Little or no pink. Can dry out easily."
+    }
+  }
 }
 ```
 
-**Evaluation Signal**
+---
 
-- Model consistency (is the range logically consistent?)
-- Alignment with physical expectations 
-- Generalization of preferences (ie. user prefers medium rare hamburger -- this should also generalize to preference on flank steak -- consistency across beef products). 
+## 10. Future Directions
 
-Domain Generalization 
+**Contextual Benchmarks**
+Move from static test sets to user-specific duration evaluations.
 
-### Exercise
+**Ground Truth Logging**
+Verify ranges using user feedback to shrink distributional uncertainty.
 
-> “How long to complete 3 sets of 5 squats at 185 lbs (experienced lifter)?”
+**Time-Aware Planning Agents**
+Extend into work/study planning, lab scheduling, and task recovery chains using accurate personal time estimates.
 
-### Study
-
-> “How long will it take to review 20 Anki cards on the immune system?”
-
-```json 
-{
-  "mean_minutes": ...,
-  "range_minutes": [..., ...],
-  "std_minutes": ...
-}
-```
-
-#### Adding Personalization 
-
-Once duration distributions are working, we can introduce user-specific positioning: 
-```json 
-{
-  "expected_preference_percentile": 25,
-  "estimated_user_duration": 3.7
-}
-```
-
-- Models estimate where a user lies within the distribution (ie. faster study time and learning rate than average)
-- Default to 50, but shift based on experience level and observed feedback (ie. fast learning rate on physics will generalize to chemistry course)
-- Enables personalized recommendations like:
-
-> “Set your timer for 3.7 minutes.”  
-> “Would you prefer to aim for the quicker end next time?”
-
-##### Feedback Loop for Personalized Adaptation 
-
-```json 
-"user_feedback": {
-  "actual_duration": 3.5,
-  "perceived_result": "It was slightly undercooked. Next time I’d go longer.",
-  "preferred_next_duration": 3.9,
-  "confidence": "high",
-  "timestamp": "2025-05-05T09:00:00Z"
-}
-```
-
-This logic will not be present in pretraining data, we need to create workflows where the language model reflects at inference and ensure the user is getting their desired output. 
-
-**Critical Point: Generalize User Preferences Across Tasks**
-
-Why Cross-Task Preference Generalization Matters 
-
-**Users rarely give exhaustive preferences** 
-
-- A user might say they like medium-rare hamburgers once. 
-- You want your agent to infer that this preference applies to flank steak, but may require additional confirmation if we are serving grilled lamb (subject to the user's verification). 
-- The goal is to still generate a prediction, but verification when there is uncertainty is important for grounding the model and making the user is satisfied with the response or action 
-
- **It enables context-aware reasoning**
-
-- Tasks are not independent, the model will start to form a coherent user model across interactions and revealed preferences 
-- This will lead to more efficient, seamless, and satisfying interactions. I would like to emphasize that rather than this making life more deterministic, this can provide users with autonomy in driving the model towards their desired goals. This level of autonomy will be highly variable across users. 
-
-**Respect and Reverance for User Autonomy**
-
-Reinforces the user's autonomy and preferences without requiring constant re-specification. We can adapt estimates as a user makes progress. For instance, we can learn that a new tool decreases the duration of task for a user. Example: Before the user had access to GPT-5, writing a C++ script took 2 hours,. Now, the script is generated in 2 minutes. 
-
-
-- The user sets a precedent once (ie. "I like my steak medium rare") and the assistant remembers and generalizes it
-- The assistant doesn't ask redundant questions ("How do you want your lamb burger cooked?" when it already knows your preference. "Do you want cheddar or blue cheese with the burger?" "Should I put in a comment and request for caramelized onions?") When the initial request is understood by the model, this opens up the opportunity for further customization and preference sharing. 
-
-- The system updates gradually with feedback, without making the user repeat low-level instructions or providing context in each new interaction. 
-
-
-
-#### **1. Minimizes friction**
-
-- Reduces the cognitive and interaction load for the user.
-    
-- Makes interactions feel fluid, like working with a thoughtful human assistant.
-    
-
-#### 2. **Signals respect for user intention**
-
-- Preserving agency means the model **adapts to you**, not the other way around.
-    
-- This is especially critical for **assistants**, **schedulers**, or **co-pilots** where repeated override is frustrating and undermines trust.
-    
-#### 3. **Supports long-term use**
-
-- Over multiple sessions or tasks, the assistant becomes more **intuitive**, more **predictive**, and ultimately **more empowering**.
-
-| Without Agency Preservation                     | With Agency Preservation                                                           |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------- |
-| “How do you want this steak cooked?” every time | “Cooking your steak medium rare as usual — want to update that?”                   |
-| “How long do you study per topic?”              | “Last time, you preferred short bursts — should I plan another 20-minute session?” |
 
 

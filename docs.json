@@ -43,22 +43,12 @@
               "concepts/icalendar",
               "concepts/mcp-integration"
             ]
-          },
-
-          {
-            "group": "Foundations",
-            "icon": "book",
-            "pages": [
-              "foundations/prompt-examples",
-              "foundations/system-design",
-              "foundations/interaction-model"
-            ]
-          },
-          
+          }, 
           {
             "group": "Examples",
             "icon": "list-check",
             "pages": [
+              "foundations/prompt-examples",
               "examples/conversation-history"
             ]
           }
