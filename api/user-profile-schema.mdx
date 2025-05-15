@@ -1,0 +1,151 @@
+---
+title: "User Profile Schema"
+group: "API"
+---
+
+# User Profile Schema
+
+Chronologue's user profile schema enables personalized agent behavior, memory access control, tempo-aware planning, and memory trace export through MemPort. Each user profile captures preferences, scheduling rhythms, permission scopes, and summarization styles to support adaptive and interpretable agent workflows.
+
+---
+
+## 1. Purpose
+
+The user profile schema:
+
+- Encodes persistent user preferences for time, memory, and planning  
+- Guides agent behavior through tempo adaptation and memory hydration  
+- Defines access control for agent-to-memory interactions via MemPort  
+- Supports planning agent decisions and LLM prompt conditioning  
+- Enables personalized calendar and trace exports with minimal friction
+
+---
+
+## 2. Core User Fields
+
+| Field         | Type    | Description                                |
+|---------------|---------|--------------------------------------------|
+| user_id       | string  | Unique user identifier                     |
+| created_at    | string  | ISO 8601 timestamp of account creation     |
+| last_active   | string  | ISO 8601 timestamp of last session         |
+| timezone      | string  | IANA timezone string (e.g., America/Los_Angeles) |
+| locale        | string  | Language-region code (e.g., en-US)         |
+| email         | string  | Optional email address                     |
+| name          | string  | Display name for UI or trace attribution   |
+| avatar_url    | string  | Optional image URL                         |
+
+---
+
+## 3. Tempo Preferences
+
+| Field                  | Type     | Description                                 |
+|------------------------|----------|---------------------------------------------|
+| preferred_tempo_tags   | array    | Default time slots (e.g., <tempo:MondayMorning>) |
+| default_duration_minutes | integer | Used when no duration is specified          |
+| tempo_bias             | string   | One of: morning, evening, uninterrupted, flexible |
+| calendar_block_style   | string   | One of: time-blocking, open, batch          |
+
+These values inform agent scheduling, tempo-token generation, and time-block allocation during plan generation.
+
+---
+
+## 4. Memory Preferences
+
+| Field              | Type     | Description                                   |
+|--------------------|----------|-----------------------------------------------|
+| memory_visibility  | string   | One of: private, agent-only, public           |
+| trace_retention_days | integer | How long to keep memory traces (default: 30) |
+| auto_reflect       | boolean  | Whether LLM-generated reflections are auto-saved |
+| summary_style      | string   | One of: brief, narrative, structured          |
+
+These preferences control trace export, summarization output, and reflection policies.
+
+---
+
+## 5. Agent Permissions
+
+| Field              | Type     | Description                                 |
+|--------------------|----------|---------------------------------------------|
+| authorized_agents  | array    | List of approved agent UIDs or roles        |
+| memport_write      | boolean  | Whether agent can write memory traces       |
+| memport_read       | boolean  | Whether agent can retrieve traces           |
+| calendar_access    | string   | Scope: read, write, sync                    |
+| feedback_enabled   | boolean  | Whether user feedback on agent output is allowed |
+
+This layer defines fine-grained permission control for memory, planning, and calendar modules.
+
+---
+
+## 6. Context Export Configuration
+
+| Field                 | Type     | Description                                      |
+|-----------------------|----------|--------------------------------------------------|
+| context_window_days   | integer  | Default memory scope for agent hydration         |
+| export_format         | string   | Default export format: summary, full, linked     |
+| group_by              | string   | Grouping for export: day, task, trace_type       |
+| agent_context_filters | object   | Inclusion rules for agent memory views           |
+
+Used when agents or external tools call MemPort to retrieve structured memory context.
+
+---
+
+## 7. Runtime Metadata and Usage
+
+| Field                   | Type     | Description                                 |
+|--------------------------|----------|---------------------------------------------|
+| session_count            | integer  | Total number of user-agent interactions     |
+| total_traces_logged      | integer  | Count of all memory traces associated       |
+| tempo_alignment_score    | float    | Average match between plan time and preferred rhythm |
+| feedback_distribution    | object   | Aggregated ratings for agent output         |
+
+These fields are updated in real time and used to support scheduling decisions, agent reward modeling, and experience tuning.
+
+---
+
+## 8. Example Profile Object
+
+{
+  "user_id": "u001",
+  "timezone": "America/New_York",
+  "preferred_tempo_tags": ["<tempo:Morning>", "<tempo:Monday>"],
+  "default_duration_minutes": 45,
+  "tempo_bias": "morning",
+  "calendar_block_style": "time-blocking",
+  "memory_visibility": "agent-only",
+  "trace_retention_days": 14,
+  "auto_reflect": true,
+  "summary_style": "structured",
+  "memport_write": true,
+  "memport_read": true,
+  "calendar_access": "sync",
+  "feedback_enabled": true,
+  "context_window_days": 7,
+  "export_format": "summary",
+  "group_by": "task",
+  "session_count": 38,
+  "tempo_alignment_score": 0.91
+}
+
+---
+
+## 9. Endpoint Reference
+
+| Endpoint                  | Description                              |
+|---------------------------|------------------------------------------|
+| GET /user/profile         | Retrieve full user profile               |
+| PATCH /user/update        | Update any editable fields               |
+| GET /user/context-config  | Fetch MemPort export preferences         |
+| POST /user/sync-memport   | (Optional) Trigger memory hydration      |
+
+---
+
+## 10. Related Concepts
+
+- Tempo Token Specification  
+- Memory Trace Schema  
+- Chronologue Context Export  
+- Authentication and Headers  
+
+---
+
+Chronologue’s user profile schema acts as the central coordination layer between memory, agents, and schedule. It enables every trace, plan, or prompt to be grounded in user-defined structure—enabling MemPort to act not only as a memory store, but as a **preference-aligned execution context** for adaptive agents.
