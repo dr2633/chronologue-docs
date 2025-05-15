@@ -47,12 +47,12 @@ Chronologue prompts are JSON requests passed to the LLM planner via the `/chat/r
 
 | Field        | Type        | Required | Description |
 |--------------|-------------|----------|-------------|
-| prompt       | string      | ✅        | Natural language input from the user |
-| timestamp    | string      | ✅        | ISO 8601 format; used for grounding time expressions |
-| timezone     | string      | ✅        | IANA timezone name (e.g., America/Los_Angeles) |
-| context      | object      | ✅        | Memory, calendar, tempo tokens, and user profile |
-| trace_id     | string      | ❌        | Optional trace or request ID for debugging |
-| debug        | boolean     | ❌        | Enables verbose logs or LLM commentary |
+| prompt       | string      | Yes      | Natural language input from the user |
+| timestamp    | string      | Yes      | ISO 8601 format; used for grounding time expressions |
+| timezone     | string      | Yes      | IANA timezone name (e.g., America/Los_Angeles) |
+| context      | object      | Yes      | Memory, calendar, tempo tokens, and user profile |
+| trace_id     | string      | No       | Optional trace or request ID for debugging |
+| debug        | boolean     | No       | Enables verbose logs or LLM commentary |
 
 ---
 

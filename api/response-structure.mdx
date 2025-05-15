@@ -1,0 +1,197 @@
+---
+title: "Response Structure"
+group: "API"
+---
+
+# Response Structure
+
+Chronologue uses a standardized response envelope for all API interactions. This design ensures consistency across endpoints, simplifies client handling, and enables integration with language model agents. Each response includes clearly defined fields for success, error, traceability, and metadata.
+
+Additionally, Chronologue supports LLM-aware responses for token-efficient summaries and function-call interoperability, including OpenAI-compatible formats.
+
+---
+
+## 1. Why It Matters
+
+A consistent response schema allows:
+
+- Developers to reliably parse success and failure outcomes  
+- LLMs to consume context-aware memory or planning responses  
+- API clients to trace, audit, and retry requests with a known `trace_id`  
+- Calendar integrations to generate `.ics` files with structured `summary` and `description` content
+
+---
+
+## 2. Core Response Envelope
+
+All Chronologue responses use the following format:
+
+| Field      | Type     | Description                                            |
+|------------|----------|--------------------------------------------------------|
+| `status`   | string   | `"success"` or `"error"`                               |
+| `data`     | object/array | Main payload if the request succeeded             |
+| `error`    | string   | Error name/code (if status = error)                    |
+| `detail`   | string   | Human-readable explanation of error                    |
+| `trace_id` | string   | Unique request ID for auditing/debugging              |
+| `meta`     | object   | Optional: timing, token usage, version, model info     |
+
+---
+
+## 3. Success Response Format
+
+Returned when a request completes successfully.
+
+Example:
+
+```json{
+  "status": "success",
+  "data": [
+    {
+      "uid": "trace-001",
+      "type": "reflection",
+      "content": "Evening planning helped me sleep easier.",
+      "timestamp": "2025-05-08T22:30:00Z"
+    }
+  ],
+  "trace_id": "req-abc123",
+  "meta": {
+    "execution_time_ms": 32,
+    "token_count": 126
+  }
+}
+```
+
+---
+
+## 4. Error Response Format
+
+Returned when validation, authentication, or internal logic fails.
+
+Example:
+
+```json
+{
+  "status": "error",
+  "error": "InvalidTempoToken",
+  "detail": "The tempo_token 'Morning@Night' is not recognized.",
+  "status_code": 400,
+  "trace_id": "req-def456",
+  "hint": "Use a defined tempo tag like <tempo:MondayMorning>."
+}
+```
+
+---
+
+## 5. LLM-Aware Responses
+
+To support LLM function calls and prompt injection, Chronologue formats `summary` and `description` fields using OpenAI-compatible language:
+
+| Field        | Description                                                             |
+|--------------|-------------------------------------------------------------------------|
+| `summary`    | Short, token-efficient title derived from `content` or task label       |
+| `description`| Rich context block including `content`, `chat_url`, agent/source note   |
+
+These fields are generated using either:
+
+- Rule-based logic  
+- OpenAI function call (e.g., `summarize_trace`, `describe_event`)  
+- User-editable overrides via interface or patch request
+
+Example for `.ics` generation:
+
+SUMMARY:Deep Work Block  
+DESCRIPTION:Wrote CUDA kernels from 9–11am.  
+Chat log: https://chat.openai.com/share/example-id
+
+---
+
+## 6. Example Endpoint Responses
+
+### Memory Pull
+
+GET /memory/pull
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "uid": "obs-001",
+      "type": "observation",
+      "content": "Worked on CUDA kernels.",
+      "timestamp": "2025-05-12T10:00:00Z"
+    }
+  ],
+  "trace_id": "req-x123",
+  "meta": {
+    "source": "planner_agent"
+  }
+}
+```
+
+### Function Call (via LLM or client)
+
+POST /functions/call
+
+```json{
+  "name": "schedule_task",
+  "arguments": {
+    "content": "Call Mom",
+    "scheduled_for": "2025-05-12T10:00:00Z",
+    "duration_minutes": 30
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "uid": "evt-222",
+    "type": "calendar_event",
+    "scheduled_for": "2025-05-12T10:00:00Z",
+    "summary": "Call Mom",
+    "description": "Scheduled via agent. Chat log: https://chat.openai.com/share/example"
+  },
+  "trace_id": "req-y789",
+  "meta": {
+    "model": "gpt-4-1106-preview"
+  }
+}
+```
+
+---
+
+## 7. Traceability and Logging
+
+All responses include a `trace_id` field which can be logged by:
+
+- Frontend clients (for debugging or support)  
+- Backend logs (FastAPI logger)  
+- Audit trails in MemPort  
+
+Use `trace_id` to correlate between agent outputs, feedback loops, and execution latency.
+
+---
+
+## 8. Future Enhancements
+
+- `warnings[]`: for soft schema mismatches, unsafe tempo tokens  
+- `stream: true`: for SSE or WebSocket responses from agents  
+- `actions[]`: suggested next functions or trace-level prompts  
+- `cached: true|false`: mark responses from Redis or MemPort cache
+
+---
+
+## 9. Best Practices
+
+- Always parse `status` before accessing `data`  
+- Log `trace_id` on both success and error  
+- Use `summary` for `.ics` calendar event titles  
+- Use `description` for rich trace exports or downstream LLM use  
+- Keep all time fields in UTC ISO format
+
+---
+
