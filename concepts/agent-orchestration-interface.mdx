@@ -3,13 +3,17 @@ title: "Agent Orchestration Interface"
 group: "Concepts"
 ---
 
-Chronologue treats time not just as a resource to manage, but as an API for managing and coordinating actions. 
+**Chronologue** treats time not just as a resource to manage, but as an API for managing and coordinating actions. 
 
-The agent orchestration interface is designed to help users **audit, steer, and schedule agent behavior** directly through the calendar. This system makes agent actions **auditable**, **controllable**, and **programmable**, giving users an interface to assign responsibility to agents in the same way one might call a ride, schedule a delivery, or block time with a collaborator.
+The agent orchestration interface is designed to help users audit, steer, and schedule agent behavior directly through their calendar. 
 
-Unlike passive logging or simple model output, Chronologue anchors agent actions in time with explicit control over **when** and **how long** the action should take. This introduces precision into task specification and empowers users to compose systems of intent with temporal constraints.
+This system makes agent actions controllable, and programmable, giving users an interface to assign responsibility to agents in the same way one might call a ride, schedule a delivery, or block time with a collaborator.
 
-Chronologue reimagines the calendar as a **control surface** for agentic workflows. As language models gain more general capabilities, there is an expanding need for interfaces that make model behaviors **legible, modifiable, and schedulable**. Chronologue is built to meet that need.
+Unlike passive logging or traditional chat interfaces, Chronologue anchors agent actions in time with control over when and how long a given action should take. 
+
+This introduces **precision into task specification** and empowers users to compose systems of intent with temporal constraints.
+
+Chronologue reimagines the calendar as a **control surface for managing agentic workflows**. As language models gain more general capabilities, there is an expanding and implicit need for interfaces that make model behaviors legible, transparent, and editable. Chronologue is built to meet that need.
 
 ---
 
@@ -21,7 +25,9 @@ Chronologue reimagines the calendar as a **control surface** for agentic workflo
 - **Executor**: Commits approved plans into persistent memory and/or calendar.
 - **Trace Log**: Immutable record of both agent proposals and user decisions.
 
-In the future, everyone will be a builder and manager. Access to tools and information will be ubiquitous—but not all interfaces will offer the same leverage. Agent orchestration is how we build utility at human scale.
+In the future, everyone will build and manage agents (with varying degrees of precision and scale). Access to tools and information will be ubiquitous — but not all interfaces will confer the same leverage to users. 
+
+Agent orchestration is how we build utility and autonomy for humans in a world where the vast majority of materially-impactful work is performed by agents.
 
 ---
 
@@ -29,8 +35,8 @@ In the future, everyone will be a builder and manager. Access to tools and infor
 
 Every agent action flows through a defined lifecycle to support transparency, modification, and feedback:
 
-- **proposal**: Agent generates an initial plan, often via function calling from an LLM.
-- **review**: Plan is displayed to the user for inspection or editing.
+- **proposal**: User or agent generates an initial plan, often via function calling from an LLM.
+- **review**: Plan is displayed to the user or organization for inspection or editing.
 - **approval**: User confirms the plan or modifies it to fit their intent.
 - **execution**: Approved plan is committed to memory and/or calendar.
 - **feedback**: Optional user input (rating, revision, comment) is logged to guide future behavior.
