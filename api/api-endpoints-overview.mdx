@@ -1,0 +1,312 @@
+---
+title: "API Endpoints Overview"
+---
+
+## Introduction
+
+Chronologue uses RESTful API endpoints to connect the user-facing frontend (React chat and calendar UI) with the backend memory store, planner engine, and language model integration.  
+
+These endpoints allow:
+
+- Chat-based task creation and agent planning  
+- Memory trace storage and editing  
+- Calendar generation and synchronization  
+- Tempo-based personalization and reflection  
+- Multi-agent orchestration via shared memory state  
+
+All endpoints return JSON and are organized by purpose below.
+
+---
+
+## Authentication
+
+All requests require a valid API key passed in the `Authorization` header.
+
+Header:
+
+Authorization: Bearer YOUR_API_KEY
+
+---
+
+## Chat & Agent Interface
+
+### POST `/chat/respond`
+
+**Description**: Process a natural language prompt and return structured response(s), traces, or planned actions.
+
+**Request Body**:
+- `prompt`: string  
+- `context`: optional object including `memory[]` and `calendar[]`
+
+**Response**:  
+Returns structured commands, proposed traces, or agent plan.
+
+---
+
+### POST `/chat/trace-summary`
+
+**Description**: Summarize relevant traces for token-efficient context injection.
+
+**Request Body**:
+- `trace_ids`: array of trace IDs
+
+**Response**:  
+List of summarized memory snippets for grounding.
+
+---
+
+### POST `/chat/plan-preview`
+
+**Description**: Preview memory or calendar plan without committing it.
+
+**Response**:  
+Array of proposed memory traces or event objects with reasoning.
+
+---
+
+## Memory Trace Management
+
+### POST `/memory/push`
+
+**Description**: Save one or more new memory traces in Chronologue schema.
+
+**Request Body**:
+- `traces`: array of memory trace objects
+
+**Response**:  
+List of saved trace UIDs with timestamps.
+
+---
+
+### GET `/memory/pull`
+
+**Description**: Retrieve memory by `user_id`, `task_id`, `tempo_tag`, or time range.
+
+**Query Params**:
+- `user_id`  
+- `type`  
+- `start_time`, `end_time`
+
+**Response**:  
+List of matching memory trace objects.
+
+---
+
+### PATCH `/memory/edit`
+
+**Description**: Edit an existing trace by `uid`.
+
+**Request Body**:
+- `uid`: string  
+- `updates`: object with new values
+
+**Response**:  
+Updated trace object with version incremented.
+
+---
+
+### GET `/memory/history`
+
+**Description**: Return full revision history for a given trace.
+
+**Query Params**:
+- `uid`: string
+
+**Response**:  
+List of prior versions and diffs.
+
+---
+
+### POST `/memory/search`
+
+**Description**: Search memory content using keywords, tags, or semantic embedding.
+
+**Request Body**:
+- `query`: string
+
+**Response**:  
+List of matching trace summaries with confidence scores.
+
+---
+
+## Calendar Event Integration
+
+### POST `/calendar/create`
+
+**Description**: Add a calendar event (Chronologue `.ics`-compliant).
+
+**Request Body**:
+- `title`, `scheduled_for`, `duration_minutes`, `task_id`
+
+**Response**:  
+Created event object with UID and ISO-8601 timestamps.
+
+---
+
+### GET `/calendar/events`
+
+**Description**: Retrieve upcoming or past events.
+
+**Query Params**:
+- `start`, `end` (ISO dates)
+- `tag` (optional)
+
+**Response**:  
+Array of calendar event objects.
+
+---
+
+### PATCH `/calendar/edit`
+
+**Description**: Modify calendar entry fields.
+
+**Request Body**:
+- `uid`: string  
+- `updates`: object
+
+**Response**:  
+Modified event object.
+
+---
+
+### DELETE `/calendar/remove`
+
+**Description**: Delete a calendar event by UID.
+
+**Query Param**:
+- `uid`: string
+
+**Response**:  
+Success message or error if not found.
+
+---
+
+## Agent Planning & Execution
+
+### POST `/agent/plan`
+
+**Description**: Generate structured plan from natural language prompt.
+
+**Request Body**:
+- `prompt`: string  
+- `context`: memory and schedule
+
+**Response**:  
+Ordered list of proposed actions with `task_id`s and temporal estimates.
+
+---
+
+### POST `/agent/execute`
+
+**Description**: Execute or simulate an agent task by ID.
+
+**Request Body**:
+- `task_id`: string
+
+**Response**:  
+Execution log, result trace, or confirmation.
+
+---
+
+### GET `/agent/status`
+
+**Description**: Retrieve agent runtime status, plan queue, or diagnostics.
+
+**Response**:  
+Agent status summary.
+
+---
+
+## Tempo & Preference Handling
+
+### GET `/tempo/tags`
+
+**Description**: List available tempo tags for scheduling.
+
+**Response**:  
+Array of tag strings (e.g., `@morning`, `30min_block`)
+
+---
+
+### POST `/tempo/adjust`
+
+**Description**: Update user or task-specific timing preferences.
+
+**Request Body**:
+- `user_id`, `preferences`
+
+**Response**:  
+Updated preference profile.
+
+---
+
+### GET `/tempo/profile`
+
+**Description**: Get a user’s known tempo preferences.
+
+**Query Param**:
+- `user_id`: string
+
+**Response**:  
+Profile with time ranges, tag mappings, and duration biases.
+
+---
+
+## User & Session Management
+
+### POST `/user/login`
+
+**Description**: Authenticate and return session token.
+
+**Request Body**:
+- `email`, `password`
+
+**Response**:  
+JWT token or session object.
+
+---
+
+### GET `/user/profile`
+
+**Description**: Retrieve user-specific memory, tempo, and preference settings.
+
+---
+
+### PATCH `/user/update`
+
+**Description**: Update settings for a given user.
+
+**Request Body**:
+- `user_id`, `updates`
+
+**Response**:  
+Modified user profile.
+
+---
+
+## System Utilities
+
+### GET `/health`
+
+**Description**: Check API status.
+
+**Response**:  
+`200 OK`
+
+---
+
+### GET `/version`
+
+**Description**: Return current Chronologue API version and build metadata.
+
+---
+
+### POST `/debug/trace-dump`
+
+**Description**: Developer tool for dumping memory snapshot for inspection.
+
+**Response**:  
+List of traces + metadata.
+
+---
+

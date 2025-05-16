@@ -1,0 +1,159 @@
+---
+title: "Causal Traces and Reflection"
+sidebarTitle: "Causal Traces"
+---
+
+## 1. Introduction: Why Causal Trace Linking Matters
+
+Using memory to understand causality is **foundational** for self-observation and agentic behavior. You're not just logging data — you're building a structured memory model that supports narrative explanations, traceable outcomes, and future alignment.
+
+This section defines how to formally encode causal relationships across memory traces and introduces tools for evaluating follow-through, deviation, and behavioral drift.
+
+---
+
+## 2. Causal Attribution with Memory Traces
+
+Chronologue supports building causal chains in memory:
+
+- `goal → action → observation → reflection`
+
+This enables reasoning over:
+
+- “Did I do what I said I’d do?”  
+- “What changed between intention and outcome?”  
+- “What influenced my decision to deviate?”
+
+These traces form **causal scaffolds** that go beyond correlation—grounded in timestamped decisions, not abstract trends.
+
+---
+
+## 3. Structuring LLM-Readable Causal Chains
+
+LLMs struggle with causality unless sequences are made explicit.
+
+By structuring traces with `linked_trace_ids` and temporal anchors, Chronologue enables agents to reason over:
+
+- Goals and their downstream effects
+- Environmental or internal interruptions
+- Reflections tied to failed or revised plans
+
+This makes agents not just predictive, but **explainable** and **adaptive**.
+
+---
+
+## 4. Memory as a Substrate for Intervention
+
+Causal memory enables intervention:
+
+- What patterns predict follow-through?
+- Which conditions lead to avoidance or revision?
+- How can I revise plans to yield better results?
+
+This becomes possible because:
+
+- **Intent is stored** (`goal`, `scheduled_for`)
+- **Outcome is measured** (`observation`, `reflection`)
+- **Review is structured** (`linked_trace_ids`, `completion_status`)
+
+Without memory, there's no counterfactuals. Without counterfactuals, there's no causality.
+
+---
+
+## 5. Formalizing Causal Scaffolds
+
+### Add `linked_trace_ids`
+
+```json
+"linked_trace_ids": ["trace-001", "trace-002"]
+```
+This supports:
+- Forward references (goal → actions)
+- Backward references (reflection → goal)
+
+### Use Human-Readable Trace IDs
+
+| Type        | Example Trace ID                     |
+|-------------|--------------------------------------|
+| Goal        | goal-2024-05-15-start-journal        |
+| Observation | obs-2024-05-17-journal-entry-1       |
+| Reflection  | ref-2024-05-18-week-1-review         |
+
+Avoid opaque UUID-only traces where clarity is needed.
+
+### Add `causal_link` Relationship Types
+
+```json
+"linked_trace_ids": [
+  { "trace_id": "goal-2024-05-15-start-journal", "relation": "follows_from" }
+]
+```
+
+Supported relations:
+- `follows_from`
+- `fulfills`
+- `derives_from`
+- `contradicts`
+- `reflects_on`
+
+This enables future **graph analysis** and LLM-assisted trace chaining.
+
+---
+
+## 6. Goal Completion Protocols
+
+Every `goal` trace should result in:
+- A linked `observation`, or
+- A linked `reflection` explaining divergence
+
+### Completed Example
+
+```json
+{
+  "type": "goal",
+  "trace_id": "goal-2024-05-10-publish-blog",
+  "completion_status": "completed",
+  "linked_trace_ids": ["obs-2024-05-14-blog-published"]
+}
+```
+
+### Abandoned Example
+
+```json
+{
+  "type": "goal",
+  "trace_id": "goal-2024-05-10-publish-blog",
+  "completion_status": "abandoned",
+  "linked_trace_ids": ["ref-2024-05-14-did-not-write"]
+}
+```
+
+This structure ensures **causal closure** and trace accountability.
+
+---
+
+## 7. Metrics for Causal Evaluation
+
+Chronologue can now compute:
+
+- `% of goals with successful observations`
+- `mean time-to-observation`
+- `average deviation from planned duration`
+- `frequency of goal revision, abandonment, or delay`
+
+This supports personal feedback and system-wide benchmarking.
+
+---
+
+## 8. Best Practices
+
+| Practice                         | Why It Matters                        |
+|----------------------------------|----------------------------------------|
+| Use `linked_trace_ids`           | Enables trace chaining and retrospection |
+| Always close `goal` traces       | Builds narrative accountability         |
+| Tag all `observation` + `reflection` traces | Enables clear causal divergence tracking |
+| Use structured IDs               | Human-readable graphs and diffs         |
+| Review trace chains weekly       | Detect drift, gaps, or blocked patterns |
+
+---
+
+Chronologue turns raw memory into structured introspection. Causal scaffolds allow agents—and humans—to understand what happened, why it happened, and how it might have gone differently.

@@ -1,0 +1,171 @@
+---
+title: "Integration Guide: Google Calendar"
+---
+
+## 1. Introduction
+
+This guide explains how to integrate Chronologue with Google Calendar using the official Google Calendar API. By exporting memory traces as `.ics` files and syncing them via OAuth 2.0, users can schedule agent-generated events directly to their calendar.
+
+Chronologue supports end-to-end export of `calendar_event` memory traces into `.ics` format and subsequent push to the authenticated user’s Google Calendar.
+
+---
+
+## 2. Prerequisites
+
+Before beginning integration, ensure you have:
+
+- A Google Account  
+- Python 3.8+  
+- `google-auth`, `google-api-python-client`, and `ics` installed  
+- A Chronologue memory trace with `scheduled_for`, `duration_minutes`, and `title`
+
+---
+
+## 3. Google Cloud Setup
+
+### Step 1: Create Google Cloud Project
+
+1. Visit: https://console.cloud.google.com/  
+2. Create a new project  
+3. Navigate to **APIs & Services → Library**  
+4. Enable **Google Calendar API**
+
+### Step 2: Configure OAuth 2.0 Credentials
+
+1. Go to **APIs & Services → Credentials**  
+2. Click **+ CREATE CREDENTIALS → OAuth client ID**  
+3. If prompted, configure the consent screen:
+   - Type: `External`
+   - App Name: `Chronologue Calendar`
+   - Add developer contact
+4. Application Type: `Desktop App`  
+5. Name it: `Chronologue Local Calendar Access`  
+6. Click `Create` and download the JSON credentials
+
+---
+
+## 4. Project Configuration
+
+1. Place your downloaded file in your project as:  
+   `calendar/credentials.json`
+
+2. Add to `.gitignore`:
+
+```bash
+calendar/credentials.json  
+calendar/token.json
+```
+3. Ensure you have the following packages installed:
+
+pip install google-api-python-client google-auth google-auth-oauthlib ics
+
+---
+
+## 5. Run the Sync Script
+
+From the root of your Chronologue repo:
+
+python modules/calendar_io/sync_google_json.py
+
+On first run:
+- A browser window will open for OAuth authentication  
+- A `token.json` file will be saved for reuse
+
+---
+
+## 6. Sync Script Overview
+
+### `authenticate_google()`
+
+- Authenticates user via OAuth  
+- Loads token if available, otherwise runs `InstalledAppFlow`  
+- Saves new token for future runs
+
+### `convert_json_folder_to_ics(input_dir, output_dir)`
+
+- Iterates over memory traces (`*.json`)  
+- Parses `title`, `scheduled_for`, `duration_minutes`  
+- Generates `.ics` VEVENT blocks
+
+Example:
+
+
+```bash
+input_dir = Path("data/conversation/raw")  
+output_dir = Path("data/conversation/processed")  
+convert_json_folder_to_ics(input_dir, output_dir)
+```
+
+
+### `parse_ics_and_sync(ics_path, service)`
+
+- Reads `.ics` files  
+- Constructs Google Calendar event payloads  
+- Pushes events via:
+
+service.events().insert(calendarId="primary", body=payload).execute()
+
+---
+
+## 7. Event Format Mapping
+
+| Memory Trace Field   | Calendar Field     |
+|----------------------|--------------------|
+| `title`              | `summary`          |
+| `scheduled_for`      | `start.dateTime`   |
+| `duration_minutes`   | `end.dateTime`     |
+| `content` + `chat_url` | `description`   |
+| `location` (optional)| `location`         |
+| `uid` or `task_id`   | `id` (custom UID)  |
+
+---
+
+## 8. Example Memory Trace
+
+```json
+{
+  "type": "calendar_event",
+  "title": "Deep Work Block",
+  "scheduled_for": "2025-05-12T09:00:00Z",
+  "duration_minutes": 120,
+  "task_id": "deepwork-20250512",
+  "content": "Work on CUDA kernel development and testing.",
+  "chat_url": "https://chat.openai.com/share/example-link"
+}
+```
+
+This becomes:
+
+```ics
+BEGIN:VEVENT  
+UID:deepwork-20250512  
+DTSTAMP:20250511T220000Z  
+DTSTART:20250512T090000Z  
+DTEND:20250512T110000Z  
+SUMMARY:Deep Work Block  
+DESCRIPTION:Work on CUDA kernel development.  
+Chat log: https://chat.openai.com/share/example-link  
+STATUS:CONFIRMED  
+END:VEVENT
+```
+
+---
+
+## 9. Security Best Practices
+
+- Never commit `credentials.json` or `token.json`  
+- Use `.env` or secrets manager in production  
+- Rotate OAuth credentials periodically  
+- Limit scope of calendar permissions to only what's required
+
+---
+
+## 10. Related Pages
+
+- Authentication and Headers  
+- Calendar Event Schema  
+- MemPort Context Export
+
+---
+
+Chronologue’s Google Calendar integration bridges structured memory planning with real-world scheduling. With OAuth authentication, `.ics` generation, and sync scripts, you can schedule agent-generated tasks across your time horizon—automatically and transparently.

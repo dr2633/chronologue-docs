@@ -1,0 +1,98 @@
+---
+title: "Calendar Event Schema"
+---
+
+## 1. Introduction
+
+Chronologue supports converting memory traces into `.ics`-compliant calendar events for integration with platforms like Google Calendar and Apple Calendar. This allows agents and users to schedule actions with temporal grounding and persistent reminders.
+
+Each calendar event is derived from a structured memory trace and formatted as a `VEVENT` block.
+
+---
+
+## 2. Core Fields
+
+| Field            | Type     | Required | Description                                      |
+|------------------|----------|----------|--------------------------------------------------|
+| `title`          | string   | ✓        | Human-readable label for the event               |
+| `timestamp`      | ISO 8601 | ✓        | Start time (UTC) of the event                    |
+| `duration_minutes` | int    | ✓        | Duration in minutes                              |
+| `task_id`        | string   | ✓        | Unique identifier of originating memory trace    |
+| `uid`            | string   | ✓        | UID used in `.ics` file                          |
+
+---
+
+## 3. Optional & Contextual Fields
+
+| Field              | Type     | Description                                                |
+|--------------------|----------|------------------------------------------------------------|
+| `content`          | string   | Detailed description of the event                          |
+| `tempo_tag`        | string   | Tempo classification (e.g., `@morning`, `30min_block`)     |
+| `linked_event_uid` | string   | Use this to sync memory to a previously created event       |
+| `chat_url`         | string   | Link to source conversation (if applicable)                |
+| `location`         | string   | Physical or virtual location of the event                  |
+| `completion_status`| string   | Optional: `completed`, `missed`, or `cancelled`            |
+| `trigger_condition`| string   | Used for agent-triggered events (e.g. `if room is clean`)   |
+
+---
+
+## 4. Full Event Example
+
+json
+{
+  "title": "Deep Work Block",
+  "timestamp": "2025-05-12T09:00:00Z",
+  "duration_minutes": 120,
+  "task_id": "goal-2025-05-12-deep-work",
+  "content": "Focus on writing and model evaluation.",
+  "tempo_tag": "@morning 2hr_block",
+  "chat_url": "https://chat.openai.com/share/example-link",
+  "location": "Desk at home office",
+  "linked_event_uid": "evt-20250512-deepwork"
+}
+
+---
+
+## 5. `.ics` Mapping Logic
+
+Chronologue uses a conversion utility like `generate_ics_string()` to produce a `VEVENT` block. Each field is safely escaped and formatted to comply with the iCalendar spec.
+
+### Sample Output:
+
+ics
+BEGIN:VEVENT  
+UID:evt-20250512-deepwork  
+DTSTAMP:20250511T180000Z  
+DTSTART:20250512T090000Z  
+DTEND:20250512T110000Z  
+SUMMARY:Deep Work Block  
+DESCRIPTION:Focus on writing and model evaluation.\nChat log: https://chat.openai.com/share/example-link  
+LOCATION:Desk at home office  
+STATUS:CONFIRMED  
+END:VEVENT
+
+---
+
+## 6. Validation Rules
+
+- `timestamp` must be in valid ISO 8601 format and converted to UTC  
+- `duration_minutes` must be ≥ 1  
+- `title` is escaped to prevent comma/semicolon injection  
+- `uid` must be globally unique per event (use `task_id + date`)  
+- `description` supports newline + chat reference for traceability
+
+---
+
+## 7. Integration Notes
+
+Chronologue calendar events can be:
+
+- Exported to `.ics` files
+- Synced to Google Calendar using the [Google Calendar Integration Guide](/Users/derekrosenzweig/Documents/GitHub/mintlify-docs/concepts/google-calendar.mdx)
+- Referenced back to memory traces via `linked_event_uid`
+
+Use this schema as a foundation for task planning, temporal triggers, and multi-agent synchronization in real-world environments.
+
+---
+
+Calendar events are more than reminders — they are a programmable, editable interface for agents operating across time, context, and memory.

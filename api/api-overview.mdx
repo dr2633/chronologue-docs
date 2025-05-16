@@ -1,0 +1,79 @@
+---
+title: "API Overview"
+---
+
+## Introduction
+
+Chronologue’s API is designed for async, agent-oriented workflows, supporting structured memory traces, personalized scheduling, and context-aware planning. It integrates a **FastAPI-based backend** with an **OpenAPI-standardized interface**, ensuring clear documentation, robust validation, and multi-agent interoperability.
+
+---
+
+## FastAPI as the Implementation Layer
+
+Chronologue uses **FastAPI** to:
+
+- Define async RESTful endpoints  
+- Validate input with Pydantic models  
+- Support dependency injection and security  
+- Serve automatic OpenAPI docs at `/docs` and `/openapi.json`  
+
+This enables developers to build reliable, high-performance backend logic with Python typing and schema introspection.
+
+---
+
+## OpenAPI as the Documentation & Contract Layer
+
+Chronologue adopts **OpenAPI** (v3) as its standard for describing:
+
+- Endpoint paths and HTTP methods  
+- Request/response schemas  
+- Authentication headers and error codes  
+- Parameter validation and types  
+
+This makes the API:
+
+- **Self-describing**: clients can auto-generate code  
+- **Interoperable**: integrates with external tools, agents, and platforms  
+- **Testable**: contract-first development supports mock testing and inspection  
+
+---
+
+## Design Goals
+
+Chronologue’s API is designed to be:
+
+- **Composable** – Endpoints map cleanly to memory, planning, and execution layers  
+- **Asynchronous** – All server logic is non-blocking and concurrency-safe  
+- **Transparent** – Each endpoint returns structured metadata, diagnostics, and traceable results  
+- **Memory-first** – Chronologue uses structured traces as its primary data model across planning and reflection
+
+---
+
+## Development and Usage Workflow
+
+1. **Build endpoints in FastAPI**  
+   Define routes, schemas, and business logic using async def functions.
+
+2. **Expose OpenAPI schema**  
+   FastAPI auto-generates `/openapi.json`, used by Swagger, Redoc, and external SDKs.
+
+3. **Document endpoints in `.mdx` files**  
+   Use OpenAPI-style syntax to explain behavior, parameters, examples, and use cases.
+
+4. **Sync updates across tools**  
+   Keep `.mdx` docs aligned with backend versioning and testing suites.
+
+---
+
+## Where to Start
+
+- [API Endpoints Overview](./api-endpoints-overview.mdx)  
+- [Authentication and Headers](./authentication-and-headers.mdx)  
+- [Memory Trace Schema](./memory-trace-schema.mdx)  
+- [Calendar Event Schema](./calendar-event-schema.mdx)
+
+For integration examples, explore [Integration Guide: Google Calendar](./integration-guide-google-calendar.mdx)
+
+---
+
+Chronologue’s API is not just a way to call functions — it is a **contract for persistent memory, time-grounded planning, and traceable agent coordination**. Designed for multi-agent, human-in-the-loop systems.

@@ -1,0 +1,170 @@
+---
+title: "Agent DSL and Execution Model"
+---
+
+## 1. Introduction
+
+Chronologue supports structured, time-aware agent behavior using a Domain-Specific Language (DSL) inspired by CUDA’s host-device execution model. This framework enables users and planners to define **what agents should do, when they should do it, and under what constraints**—while capturing execution metrics for profiling, debugging, and adaptive optimization.
+
+Just as CUDA allows developers to launch kernels, manage device memory, and orchestrate parallel execution, Chronologue empowers users to coordinate agents across time and context, with clear visibility and composability.
+
+---
+
+## 2. CUDA → Chronologue Mapping
+
+| CUDA Concept           | Chronologue Parallel     | Description                                                                         |
+|------------------------|--------------------------|-------------------------------------------------------------------------------------|
+| Host (CPU)             | Planner / User           | Orchestrates agent plans, manages context, issues intent                           |
+| Device (GPU)           | Agent Worker             | Executes scheduled actions and logs results                                        |
+| Kernel Launch          | `agent_plan`             | A structured, schedulable action (e.g., `reflect`, `schedule`, `notify`)           |
+| Thread Hierarchy       | Sub-agents / Delegation  | Decomposed plans, subsystems, or modules acting in parallel                        |
+| `cudaMemcpy`           | MemPort (Context Transfer) | Moves memory traces and state into/out of agent execution scope                 |
+| Stream / Event Sync    | Feedback / Approval Loop | Temporal synchronization and result validation                                     |
+
+---
+
+## 3. Agent Launch & Scheduling
+
+Every action in Chronologue begins with a plan.
+
+A typical `agent_plan` includes:
+
+```json
+{
+  "action_type": "reflect",
+  "target": "weekly review",
+  "scheduled_for": "2025-05-10T17:00:00Z",
+  "tempo_token": "<tempo:FridayEvening>",
+  "repeat": "weekly"
+}
+```
+
+The planner queues the plan, the scheduler assigns execution time, and the agent runtime dispatches the action.
+
+---
+
+## 4. Memory Transfer with MemPort
+
+MemPort serves as Chronologue’s **versioned memory plane**—a transport and sync layer for structured memory traces across agent planning, execution, and feedback cycles.
+
+**Before execution**, MemPort:
+- Hydrates agent context using `GET /memport/pull`
+- Filters memory by `tempo_tag`, `task_id`, or `type`
+- Injects relevant trace context into the agent environment
+
+**During execution**, agents:
+- Draft traces and log actions using `POST /memport/push`
+- Use MemPort as a staging buffer for intermediate output
+- Defer commits until review or feedback is collected
+
+**After execution**, MemPort:
+- Links results to originating plans via `linked_trace_ids`
+- Captures metadata like `deviation_ms`, `tempo_alignment`, and `feedback_score`
+- Stores traces in a versioned, queryable format
+
+This architecture not only enables **persistence and auditability**, but also fosters **collaborative memory sharing between developers, agents, and users**, unlocking shared debugging, agent tuning, and multi-agent workflows.
+
+---
+
+## 5. Profiling Agent Behavior
+
+Chronologue captures temporal performance metrics just as CUDA captures device-level runtime statistics.
+
+| Metric              | Description                                               |
+|---------------------|-----------------------------------------------------------|
+| `execution_latency` | Time between plan issuance and task completion            |
+| `deviation_ms`      | Timing drift from `scheduled_for` to `executed_at`       |
+| `feedback_score`    | Post-execution user or system rating                     |
+| `tempo_alignment`   | Whether the agent respected the intended temporal window  |
+
+Example profiling record:
+
+```json
+{
+  "trace_uid": "agent-plan-123",
+  "scheduled_for": "2025-05-10T22:00:00Z",
+  "executed_at": "2025-05-10T22:17:00Z",
+  "tempo_token": "<tempo:EveningReview>",
+  "deviation_ms": 102000,
+  "feedback_score": 4,
+  "tempo_alignment": "partial"
+}
+```
+
+---
+
+## 6. Chronologue Execution Stack
+
+Chronologue behaves like a compiler and runtime for agent plans:
+
+| Layer        | Chronologue Module       | Role                                               |
+|--------------|---------------------------|----------------------------------------------------|
+| Source Code  | Prompt / `agent_plan`     | User-submitted action or schedule                  |
+| AST / IR     | Trace Graph               | Parsed, structured plan with metadata              |
+| Scheduler    | `scheduler.py`            | Assigns time, priority, and execution context      |
+| Runtime      | `executor.py`             | Executes actions and triggers tools                |
+| Profiler     | `profiler.py`             | Captures time, deviation, and feedback metrics     |
+| Feedback     | `feedback_loop.py`        | Updates memory and influences future plans         |
+| Memory Sync  | MemPort                   | Transfers state across time, agents, and systems   |
+
+---
+
+## 7. Agent Programming Grammar (DSL)
+
+Chronologue’s DSL allows structured agent planning with constraints, feedback loops, and conditional logic.
+
+```json
+{
+  "action_type": "schedule",
+  "content": "Call Mom",
+  "scheduled_for": "Sunday 10am",
+  "conditions": [
+    {
+      "if_feedback_score_below": 3,
+      "reschedule_to": "Sunday 5pm"
+    }
+  ]
+}
+```
+
+Supported fields:
+- `action_type`: `reflect`, `schedule`, `notify`, `log`
+- `scheduled_for`: ISO 8601 or tempo token
+- `conditions`: runtime reactivity
+- `repeat`, `deadline`, `priority`, `retry_on_failure`
+
+---
+
+## 8. Abstraction Layers
+
+| Layer       | Chronologue Equivalent          | Description                                      |
+|-------------|----------------------------------|--------------------------------------------------|
+| High-level  | Natural language prompts         | User-friendly commands                           |
+| Mid-level   | Agent DSL / `agent_plan`         | Structured, schedulable behavior surface         |
+| Low-level   | Execution traces, profiling logs | Diagnostic and optimization surface              |
+
+Each layer serves a different user persona—from casual scheduling to power-user agent orchestration.
+
+---
+
+## 9. Design Recommendations
+
+- **Empower users** with composable, schema-enforced agent plans  
+- **Use MemPort** as a persistent, shared memory bus for agents  
+- **Expose profiling** data selectively for developers and auditors  
+- **Drive learning** from feedback and time-aware execution results  
+- **Treat plans as source code**, not just ephemeral commands
+
+---
+
+## 10. Future Directions
+
+- **Static analysis of agent plans** for conflict detection and coverage  
+- **RLHF for time-grounded behavior** (feedback + deviation-based reward shaping)  
+- **Graph-based optimization of chained plans**  
+- **Simulated planning + schedule replay for debugging**  
+- **Collaborative agents sharing trace context through MemPort**
+
+---
+
+Chronologue’s Agent DSL and execution model provide the control surface for time-aware, memory-driven, and user-aligned agent systems. With **MemPort as the versioned memory plane**, agents gain both **persistence and portability**, forming the foundation for scalable, auditable, and collaborative AI behavior.
